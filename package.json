@@ -1,0 +1,26 @@
+{
+  "name": "odbc-interface",
+  "version": "1.0.0",
+  "description": "ODBC interface website",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "William Emfinger",
+  "license": "MIT",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.3",
+    "express-handlebars": "^3.0.0",
+    "odbc": "^1.4.1"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/max-mobility/obdc-interface.git"
+  },
+  "bugs": {
+    "url": "https://github.com/max-mobility/obdc-interface/issues"
+  },
+  "homepage": "https://github.com/max-mobility/obdc-interface#readme"
+}

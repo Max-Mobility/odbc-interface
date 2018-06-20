@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>Permobil SmartDrive Syspro Search</title>
+  </head>
+  <body>
+    <form method="post">
+      <select name="searchType">
+        {{#types}}
+        <option value="{{.}}">{{.}}</option>
+        {{/types}}
+      </select>
+      <input type="text" name="searchQuery"></input>
+      <input type="submit" value="Search" class="submitButton">
+    </form>
+{{#search}}
+<p>Search result for query '{{query}}' of type '{{type}}'
+{{/search}}
+{{#items}}
+<details>
+<summary>Sales Order: {{SalesOrder}}</summary>
+<ul>
+{{#list .}}
+{{/list}}
+</ul>
+</details>
+{{/items}}
+</body>
+</html>
