@@ -117,7 +117,7 @@ app.post('/', (request, response) => {
 
     //var query = `select * from [dbo.ArCustomer+] where ${field}=${value}`;
     var query = `select * from [${table}]` +
-        (value && value.length && ` where ${field}=${value}`);
+        (value && value.length && ` where ${field}='${value}'`);
     //var query = `select * from dbo.SorMaster where ${field}=${value}`;
     //var query = `select * from dbo.SorDetail where ${field}='${value}'`;
     console.log(query);
