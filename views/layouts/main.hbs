@@ -3,28 +3,9 @@
     <title>Permobil SmartDrive Syspro Search</title>
   </head>
   <body>
-    <form method="post">
-      <select name="searchTable">
-        {{#tables}}
-        <option value="{{title}}"{{#selected}} selected{{/selected}}>{{title}}</option>
-        {{/tables}}
-      </select>
-      <select name="searchField">
-        {{#fields}}
-        <option value="{{title}}"{{#selected}} selected{{/selected}}>{{title}}</option>
-        {{/fields}}
-      </select>
-      <input type="text" name="searchQuery" value="{{search.query}}"></input>
-      <input type="submit" value="Search" class="submitButton">
-    </form>
-{{#search}}
-<p>Search result for query '{{query}}' of type '{{field}}' from table '{{table}}'
-{{/search}}
-{{#items}}
-<details>
-{{#list .}}
-{{/list}}
-</details>
-{{/items}}
-</body>
+    {{{body}}}
+  </body>
+  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+  <script>
+  </script>
 </html>

@@ -46,6 +46,7 @@ db.open(cn, function (err) {
 
 // vars
 const app = express();
+app.use(express.static('public'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: true
@@ -90,6 +91,14 @@ app.get('/', (request, response) => {
     response.render('home', templateContext());
 });
 
+app.get('/check_rma', (request, response) => {
+    response.render('check_rma', templateContext());
+});
+
+app.get('/check_order', (request, response) => {
+    response.render('check_order', templateContext());
+});
+
 // InvSerialHead
 //    - get: StockCode, Serial, SerialDescription, ServiceFlag
 //    - from: Customer (SorMaster)
@@ -125,6 +134,14 @@ app.post('/', (request, response) => {
         if (err) console.log(err);
         response.render('result', Object.assign(templateContext(), { items: data }));
     });
+});
+
+app.post('/check_rma', (request, response) => {
+    console.log('Checking RMA');
+});
+
+app.post('/check_order', (request, response) => {
+    console.log('Checking order');
 });
 
 // something here?

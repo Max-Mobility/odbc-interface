@@ -1,0 +1,25 @@
+<a href="/check_rma" id="rma_button" style="button">Check RMA Status</a>
+<a href="/check_order" id="order_button" style="button">Check Order Status</a>
+<form method="post">
+<select name="searchTable">
+{{#tables}}
+<option value="{{title}}"{{#selected}} selected{{/selected}}>{{title}}</option>
+{{/tables}}
+</select>
+<select name="searchField">
+{{#fields}}
+<option value="{{title}}"{{#selected}} selected{{/selected}}>{{title}}</option>
+{{/fields}}
+</select>
+<input type="text" name="searchQuery" value="{{search.query}}"></input>
+<input id="submit" type="submit" value="Search" class="submitButton">
+</form>
+{{#search}}
+<p>Search result for query '{{query}}' of type '{{field}}' from table '{{table}}'</p>
+{{/search}}
+{{#items}}
+<details>
+{{#list .}}
+{{/list}}
+</details>
+{{/items}}
