@@ -2,7 +2,17 @@
 
 This repo contains Node.JS code for connecting to a SQL server using ODBC.
 
+## Installation Steps (if applicable)
+
+1. Clone repo
+2. Run `npm install`
+3. Run `npm start`
+4. Visit http://localhost:3000/
+
+
 ## Requirements
+
+* [Node.js](http://nodejs.org/) (8.9.0+)
 
 ### Installing node-obdc
 

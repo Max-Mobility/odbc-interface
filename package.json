@@ -1,20 +1,30 @@
 {
   "name": "odbc-interface",
   "version": "1.0.0",
-  "description": "ODBC interface website",
-  "main": "index.js",
+  "description": "https://www.sitepoint.com/creating-and-handling-forms-in-node-js/",
+  "main": "src/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon src/server.js"
   },
+  "keywords": [],
   "author": "William Emfinger",
   "license": "MIT",
   "dependencies": {
-    "body-parser": "^1.18.3",
-    "express": "^4.16.3",
-    "express-handlebars": "^3.0.0",
+    "cookie-parser": "^1.4.3",
+    "csurf": "^1.9.0",
+    "ejs": "^2.5.7",
+    "express": "^4.16.2",
+    "express-flash": "^0.0.2",
+    "express-layout": "^0.1.0",
+    "express-session": "^1.15.6",
+    "express-validator": "^4.3.0",
+    "helmet": "^3.10.0",
+    "multer": "^1.3.0",
     "odbc": "^1.4.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "nodemon": "^1.14.11"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/max-mobility/obdc-interface.git"
