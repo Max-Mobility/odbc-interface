@@ -5,8 +5,8 @@ const exphbs = require('express-handlebars');
 
 // DATABASE
 const fieldQueryMap = {
-    "SmartDrive Serial Number": null,
-    "PushTracker Serial Number": null,
+    "SmartDrive Serial Number": "Serial",
+    "PushTracker Serial Number": "Serial",
     "Mark For": null,
     "Email": "Email",
     "Sales Order Number": "SalesOrder",
@@ -24,6 +24,12 @@ const tableMap = {
     "RMA (Master)": "RmaMaster",
     "RMA (Master)+": "RmaMaster+",
     "RMA (Detail)": "RmaDetail",
+    "Inventory (Master)": "InvMaster",
+    "Inventory (Master)+": "InvMaster+",
+    "Inventory Serial Head": "InvSerialHead",
+    "Inventory Serial Head+": "InvSerialHead+",
+    "Inventory Serial CrossRef": "InvSerialCrossRef",
+    "Inventory Serial Transaction": "InvSerialTrn",
 };
 
 var odbc = require('odbc')
@@ -84,12 +90,18 @@ app.get('/', (request, response) => {
     response.render('home', templateContext());
 });
 
-// SorMaster - ShippingInstrs, CustomerName, ShipAddress{1-5}, ShipPostalCode, Email, LastOperator
-// SorDetail - MStockCode, MStockDes, MOrderQty
-//    - from SalesOrder (SorMaster)
-//    - use LineType=1 (2 is comment)
-// ArCustomer - Name, Telephone, Contact, SoldTo* (?), ShipTo* (?)
-//    - from Customer (SorMaster)
+// InvSerialHead
+//    - get: StockCode, Serial, SerialDescription, ServiceFlag
+//    - from: Customer (SorMaster)
+// SorMaster
+//    - get: ShippingInstrs, CustomerName, CustomerPoNumber, ShipAddress{1-5}, ShipPostalCode, Email, LastOperator
+// SorDetail
+//    - get: MStockCode, MStockDes, MOrderQty
+//    - from: SalesOrder (SorMaster)
+//    - use: LineType=1 (2 is comment)
+// ArCustomer
+//    - get: Name, Telephone, Contact, SoldTo* (?), ShipTo* (?)
+//    - from: Customer (SorMaster)
 
 // handle search from post (when submit is pressed)
 app.post('/', (request, response) => {
@@ -103,18 +115,16 @@ app.post('/', (request, response) => {
     console.log(`Searching by: ${fieldName}`);
     console.log(`Searching for: ${value}`);
 
-    if (field && field.length) {
-        //var query = `select * from [dbo.ArCustomer+] where ${field}=${value}`;
-        var query = `select * from [${table}]` +
-            (value && value.length && ` where ${field}=${value}`);
-        //var query = `select * from dbo.SorMaster where ${field}=${value}`;
-        //var query = `select * from dbo.SorDetail where ${field}='${value}'`;
-        console.log(query);
-        db.query(query, (err, data) => {
-            if (err) console.log(err);
-            response.render('result', Object.assign(templateContext(), { items: data }));
-        });
-    }
+    //var query = `select * from [dbo.ArCustomer+] where ${field}=${value}`;
+    var query = `select * from [${table}]` +
+        (value && value.length && ` where ${field}=${value}`);
+    //var query = `select * from dbo.SorMaster where ${field}=${value}`;
+    //var query = `select * from dbo.SorDetail where ${field}='${value}'`;
+    console.log(query);
+    db.query(query, (err, data) => {
+        if (err) console.log(err);
+        response.render('result', Object.assign(templateContext(), { items: data }));
+    });
 });
 
 // something here?
