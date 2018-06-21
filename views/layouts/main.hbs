@@ -4,16 +4,21 @@
   </head>
   <body>
     <form method="post">
-      <select name="searchType">
-        {{#types}}
-        <option value="{{.}}">{{.}}</option>
-        {{/types}}
+      <select name="searchTable">
+        {{#tables}}
+        <option value="{{title}}"{{#selected}} selected{{/selected}}>{{title}}</option>
+        {{/tables}}
       </select>
-      <input type="text" name="searchQuery"></input>
+      <select name="searchField">
+        {{#fields}}
+        <option value="{{title}}"{{#selected}} selected{{/selected}}>{{title}}</option>
+        {{/fields}}
+      </select>
+      <input type="text" name="searchQuery" value="{{search.query}}"></input>
       <input type="submit" value="Search" class="submitButton">
     </form>
 {{#search}}
-<p>Search result for query '{{query}}' of type '{{type}}'
+<p>Search result for query '{{query}}' of type '{{field}}' from table '{{table}}'
 {{/search}}
 {{#items}}
 <details>

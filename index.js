@@ -4,16 +4,27 @@ const bodyParser = require('body-parser');
 const exphbs = require('express-handlebars');
 
 // DATABASE
-const typeQueryMap = {
+const fieldQueryMap = {
     "SmartDrive Serial Number": null,
     "PushTracker Serial Number": null,
     "Mark For": null,
     "Email": "Email",
     "Sales Order Number": "SalesOrder",
     "Customer Number": "Customer",
-    "PO Number": "CustomerPoNumber"
+    "Customer Name": "CustomerName",
+    "PO Number": "CustomerPoNumber",
+    "RMA Number": "RmaNumber"
 };
-const types=Object.keys(typeQueryMap);
+
+const tableMap = {
+    "Sales Orders (Master)": "SorMaster",
+    "Sales Orders (Details)": "SorDetail",
+    "Customers": "ArCustomer",
+    "Customers+": "ArCustomer+",
+    "RMA (Master)": "RmaMaster",
+    "RMA (Master)+": "RmaMaster+",
+    "RMA (Detail)": "RmaDetail",
+};
 
 var odbc = require('odbc')
 , conn_str = "DSN=MySQLServerDatabase;"
@@ -35,6 +46,29 @@ app.use(bodyParser.urlencoded({
 }));
 
 const port = 3000;
+var tableName = null,
+    fieldName = null,
+    value = null;
+
+var templateContext = function() {
+    const fields=Object.keys(fieldQueryMap).map((f) => { return {
+        title: f,
+        selected: f==fieldName
+    }});
+    const tables=Object.keys(tableMap).map((f) => { return {
+        title: f,
+        selected: f==tableName
+    }});
+    return {
+        fields: fields,
+        tables: tables,
+        search: {
+            table: tableName,
+            field: fieldName,
+            query: value
+        }
+    };
+}
 
 app.engine('.hbs', exphbs({
   defaultLayout: 'main',
@@ -47,7 +81,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 // main page
 app.get('/', (request, response) => {
-    response.render('home', {types: types});
+    response.render('home', templateContext());
 });
 
 // SorMaster - ShippingInstrs, CustomerName, ShipAddress{1-5}, ShipPostalCode, Email, LastOperator
@@ -59,30 +93,26 @@ app.get('/', (request, response) => {
 
 // handle search from post (when submit is pressed)
 app.post('/', (request, response) => {
-    var searchType = request.body.searchType;
-    var searchQuery = request.body.searchQuery;
+    tableName = request.body.searchTable;
+    var table = tableMap[tableName];
+    fieldName = request.body.searchField;
+    var field = fieldQueryMap[fieldName];
+    value = request.body.searchQuery;
 
-    console.log(`Searching by: ${searchType}`);
-    console.log(`Searching for: ${searchQuery}`);
+    console.log(`Searching on: ${tableName}`);
+    console.log(`Searching by: ${fieldName}`);
+    console.log(`Searching for: ${value}`);
 
-    var type = typeQueryMap[searchType];
-    if (type && type.length && searchQuery && searchQuery.length) {
-        //var query = `select * from [dbo.ArCustomer+] where ${type}=${searchQuery}`;
-        var query = `select * from dbo.ArCustomer where ${type}=${searchQuery}`;
-        //var query = `select * from dbo.SorMaster where ${type}=${searchQuery}`;
-        //var query = `select * from dbo.SorDetail where ${type}='${searchQuery}'`;
+    if (field && field.length) {
+        //var query = `select * from [dbo.ArCustomer+] where ${field}=${value}`;
+        var query = `select * from [${table}]` +
+            (value && value.length && ` where ${field}=${value}`);
+        //var query = `select * from dbo.SorMaster where ${field}=${value}`;
+        //var query = `select * from dbo.SorDetail where ${field}='${value}'`;
         console.log(query);
         db.query(query, (err, data) => {
             if (err) console.log(err);
-            //console.log(data);
-            response.render('result', {
-                items: data,
-                types: types,
-                search: {
-                    type: searchType,
-                    query: searchQuery
-                }
-            });
+            response.render('result', Object.assign(templateContext(), { items: data }));
         });
     }
 });
