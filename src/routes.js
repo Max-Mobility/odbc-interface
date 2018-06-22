@@ -70,7 +70,7 @@ router.post('/check_rma', [
     }
 
     const data = matchedData(req);
-    value = data.query;
+    value = db.padNumber(data.query);
 
     var context = Object.assign(templateContext(), {
         data: req.body, // { message, email },
@@ -116,7 +116,7 @@ router.post('/check_order', [
     }
 
     const data = matchedData(req)
-    value = data.query;
+    value = db.padNumber(data.query);
 
     var context = Object.assign(templateContext(), {
         data: req.body, // { message, email },
@@ -240,7 +240,7 @@ router.post('/search', [
         };
         if (req.body["RMA Number"]) {
             lookupOpts.queries.push({
-                'RmaNumber': req.body["RMA Number"]
+                'RmaNumber': db.padNumber(req.body["RMA Number"])
             });
             return db.lookup(lookupOpts);
         } else if (customer.Number) {

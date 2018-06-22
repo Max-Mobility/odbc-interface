@@ -18,6 +18,7 @@ const tableMap = {
     "RMA (Master)": "RmaMaster",
     "RMA (Master)+": "RmaMaster+",
     "RMA (Detail)": "RmaDetail",
+    "RMA Serial (Detail)": "RmaDetailSer",
     "Inventory (Master)": "InvMaster",
     "Inventory (Master)+": "InvMaster+",
     "Inventory Serial Head": "InvSerialHead",
@@ -26,13 +27,34 @@ const tableMap = {
     "Inventory Serial Transaction": "InvSerialTrn",
 };
 
+function padNumber(str, len=15, c='0') {
+    //     '000000000001363'
+    var s= '', c= c || '0', len= (len || 2)-str.length;
+    while(s.length<len) s+= c;
+    return s+str;
+}
+
+const numberFields = {
+    SalesOrder: 15,
+    Customer: 15,
+    CustomerPoNumber: 15,
+    RmaNumber: 15
+}
+const numbers = Object.keys(numberFields);
+
 function makeQueries(table, data) {
     var q = [];
     tables[table].fields.map((f) => {
         if (data[f]) {
-            q.push({
-                [f]: data[f]
-            });
+            if (numbers.indexOf(f) > -1) {
+                q.push({
+                    [f]: padNumber(data[f])
+                });
+            } else {
+                q.push({
+                    [f]: data[f]
+                });
+            }
         }
     });
     return q;
@@ -174,12 +196,16 @@ const tables = {
     "RmaMaster+": {
         "fields": [
         ],
-        "makeObject": function(input, output, customer) { }
+        "makeObject": function(input, output, customer) {
+            console.log(intput);
+        }
     },
     "RmaDetail": {
         "fields": [
         ],
-        "makeObject": function(input, output, customer) { }
+        "makeObject": function(input, output, customer) {
+            console.log(intput);
+        }
     },
     "InvMaster": {
         "fields": [
@@ -287,6 +313,7 @@ function lookup(opts) {
 }
 
 function checkRMA(rma) {
+    var obj = {};
     return lookup({
         '_table': 'RmaMaster',
         'queries': [
@@ -294,10 +321,44 @@ function checkRMA(rma) {
                 RmaNumber: rma
             }
         ]
+    }).then((data) => {
+        obj = Object.assign(obj, (data && data[0]) || {});
+        return lookup({
+            '_table': 'RmaMaster+',
+            'queries': [
+                {
+                    RmaNumber: rma
+                }
+            ]
+        });
+    }).then((data) => {
+        obj = Object.assign(obj, (data && data[0]) || {});
+        return lookup({
+            '_table': 'RmaDetail',
+            'queries': [
+                {
+                    RmaNumber: rma
+                }
+            ]
+        });
+    }).then((data) => {
+        obj = Object.assign(obj, (data && data[0]) || {});
+        return lookup({
+            '_table': 'RmaDetailSer',
+            'queries': [
+                {
+                    RmaNumber: rma
+                }
+            ]
+        });
+    }).then((data) => {
+        obj = Object.assign(obj, (data && data[0]) || {});
+        return [obj];
     });
 }
 
 function checkOrder(order) {
+    var obj = {};
     return lookup({
         '_table': 'SorMaster',
         'queries': [
@@ -305,10 +366,24 @@ function checkOrder(order) {
                 SalesOrder: order
             }
         ]
+    }).then((data) => {
+        obj = Object.assign(obj, (data && data[0]) || {});
+        return lookup({
+            '_table': 'SorDetail',
+            'queries': [
+                {
+                    SalesOrder: order
+                }
+            ]
+        });
+    }).then((data) => {
+        obj = Object.assign(obj, (data && data[0]) || {});
+        return [obj];
     });
 }
 
 module.exports = {
+    padNumber,
     tables,
     makeQueries,
     fieldMap,

@@ -51,9 +51,9 @@
 <div class="rmas col" style="width: 100%">
 <h4>Search result for RMA <font color="blue"><%= search.query %></font>:</h4>
 <% if (items) { items.map((i) => { %>
-<details><summary><%= Object.keys(i)[0] %>: <%= i[Object.keys(i)[0]] %></summary>
+<details><summary>RMA: <%= i["RmaNumber"] %></summary>
 <div class="property-list">
-<% Object.keys(i).map((k) => { %>
+<% Object.keys(i).sort().map((k) => { %>
 <hr/>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>

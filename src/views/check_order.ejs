@@ -51,9 +51,9 @@
 <div class="orders col" style="width: 100%">
 <h4>Search result for order <font color="blue"><%= search.query %></font>:</h4>
 <% if (items) { items.map((i) => { %>
-<details><summary><%= Object.keys(i)[0] %>: <%= i[Object.keys(i)[0]] %></summary>
+<details><summary>Order: <%= i["SalesOrder"] %></summary>
 <div class="property-list">
-<% Object.keys(i).map((k) => { %>
+<% Object.keys(i).sort().map((k) => { %>
 <hr/>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>
