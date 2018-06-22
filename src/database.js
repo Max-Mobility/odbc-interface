@@ -51,13 +51,15 @@ const tables = {
             "ShipAddress1",
             "ShipAddress2",
             "ShipAddress3",
-            "ShipAddress4",
-            "ShipAddress5",
+            'ShipAddress3Loc',
+            'ShipAddress4',
+            'ShipAddress5',
+            'ShipPostalCode',
         ],
         "makeObject": function(input, output, customer) {
             output["Order Number"] = input.SalesOrder;
             output["PO Number"] = input.CustomerPoNumber;
-            output["Email"] = input.SalesOrder;
+            output["Email"] = input.Email;
             output["Customer Name"] = input.CustomerName;
             output["Customer Number"] = input.Customer;
             output["Last Operator"] = input.LastOperator;
@@ -65,9 +67,15 @@ const tables = {
                 input.ShipAddress1,
                 input.ShipAddress2,
                 input.ShipAddress3,
+                input.ShipAddress3Loc,
                 input.ShipAddress4,
                 input.ShipAddress5,
+                input.ShipPostalCode
             ].join('\n');
+            // customer
+            customer["Number"] = input.Customer;
+            customer["Name"] = input.CustomerName;
+            customer["Email"] = input.Email;
         }
     },
     "SorDetail": {
@@ -108,10 +116,59 @@ const tables = {
             "Customer"
         ],
         "fields": [
+            'RmaNumber',
+            'NextLine',
+            'Customer',
+            'Branch',
+            'ShipAddress1',
+            'ShipAddress2',
+            'ShipAddress3',
+            'ShipAddress3Loc',
+            'ShipAddress4',
+            'ShipAddress5',
+            'ShipPostalCode',
+            'ShipToGpsLat',
+            'ShipToGpsLong',
+            'ExtTaxCode',
+            'Telephone',
+            'Fax',
+            'PrintedFlag',
+            'Status',
+            'EntryDate',
+            'LastTransactDate',
+            'Operator',
+            'UserField1',
+            'CustomerName',
+            'MultiShipCode',
+            'Area',
+            'SpecialInstrs',
+            'Currency',
+            'AlternateKey',
+            'OrderType',
+            'ServiceTicket',
+            'Contact',
+            'LanguageCode',
+            'TimeStamp'            
         ],
         "makeObject": function(input, output, customer) {
-            console.log(Object.keys(input));
             output["RMA Number"] = input.RmaNumber;
+            output["Status"] = input.Status;
+            output["Customer"] = input.Customer;
+            output["Customer Name"] = input.CustomerName;
+            output["Operator"] = input.Operator;
+            output["Shipping Address"] = [
+                input.ShipAddress1,
+                input.ShipAddress2,
+                input.ShipAddress3,
+                input.ShipAddress3Loc,
+                input.ShipAddress4,
+                input.ShipAddress5,
+                input.ShipPostalCode
+            ].join('\n');
+            output["Entry Date"] = input.EntryDate;
+            output["Last Transaction Date"] = input.LastTransactDate;
+            output["Special Instructions"] = input.SpecialInstrs;
+            output["Service Ticket"] = input.ServiceTicket;
         }
     },
     "RmaMaster+": {
@@ -145,6 +202,7 @@ const tables = {
             "ServiceFlag",
         ],
         "makeObject": function(input, output, customer) {
+            console.log(input);
             output['Stock Code'] = input.StockCode;
             output['Serial Number'] = input.Serial;
             output['Description'] = input.SerialDescription;
@@ -169,6 +227,9 @@ const tables = {
 }
 
 
+// RmaMaster
+//    - get:
+//    - from: Customer (SorMaster)
 // InvSerialHead
 //    - get: StockCode, Serial, SerialDescription, ServiceFlag
 //    - from: Customer (SorMaster)

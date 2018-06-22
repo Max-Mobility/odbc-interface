@@ -201,7 +201,13 @@ router.post('/search', [
         'queries': []
     };
     lookupOpts.queries = db.makeQueries(lookupOpts._table, input);
-    db.lookup(lookupOpts).then((data) => {
+    return new Promise((resolve, reject) => {
+        if (lookupOpts.queries.length) {
+            db.lookup(lookupOpts).then((data) => resolve(data)).catch((err) => reject(err));
+        } else {
+            resolve([]);
+        }
+    }).then((data) => {
         // PULL OUT DATA
         data.map((d) => {
             var sor = {};
@@ -211,9 +217,17 @@ router.post('/search', [
         // Look up from ArCustomer
         lookupOpts = {
             '_table': 'ArCustomer',
-            'queries': []
+            'queries': [
+            ]            
         };
-        return [];
+        if (customer.Number) {
+            lookupOpts.queries.push({
+                'Customer': customer.Number
+            });
+            return db.lookup(lookupOpts);
+        } else {
+            return [];
+        }
     }).then((data) => {
         // PULL OUT DATA
         data.map((d) => {
@@ -224,12 +238,19 @@ router.post('/search', [
             '_table': 'RmaMaster',
             'queries': []
         };
-        return [];
+        if (customer.Number) {
+            lookupOpts.queries.push({
+                'Customer': customer.Number
+            });
+            return db.lookup(lookupOpts);
+        } else {
+            return [];
+        }
     }).then((data) => {
         // PULL OUT DATA
         data.map((d) => {
             var rma = {};
-            db.tables.RmaMaster.makeObject(d, {}, customer);
+            db.tables.RmaMaster.makeObject(d, rma, customer);
             rmas.push(rma);
         });
         // Look up from InvSerialHead
@@ -237,12 +258,24 @@ router.post('/search', [
             '_table': 'InvSerialHead',
             'queries': []
         };
-        return [];
+        if (req.body["SmartDrive Serial Number"] || req.body["PushTracker Serial Number"]) {
+            lookupOpts.queries.push({
+                'Serial': req.body["SmartDrive Serial Number"] || req.body["PushTracker Serial Number"]
+            });
+            return db.lookup(lookupOpts);
+        } else if (customer.Number) {
+            lookupOpts.queries.push({
+                'Customer': customer.Number
+            });
+            return [];//db.lookup(lookupOpts);
+        } else {
+            return [];
+        }
     }).then((data) => {
         // PULL OUT DATA
         data.map((d) => {
             var dev = {};
-            db.tables.InvSerialHead.makeObject(d, {}, customer);
+            db.tables.InvSerialHead.makeObject(d, dev, customer);
             devices.push(dev);
         });
         // now render the data

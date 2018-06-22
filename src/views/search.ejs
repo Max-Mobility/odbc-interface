@@ -56,14 +56,17 @@
   </div>
 </form>
 
-<% if (customer !== null && customer !== undefined) { %>
+<div class="results">
 
-<div class="">
-<h4>Customer <font color="blue"><%= customer.Name %></font></h4>
+<% if (customer && customer.Number) { %>
+<div class="customer-info">
+<h3>Customer <font color="blue"><%= customer.Name %></font></h3>
 </div>
+<% } else { %>
+<% } %>
 
-<div class="">
-
+<div class="orders col">
+<h4>Orders</h4>
 <% if (orders) { orders.map((i) => { %>
 <details><summary>Order: <%= i["Order Number"] %></summary>
 <ul>
@@ -73,7 +76,10 @@
 </ul>
 </details>
 <% })} %>
+</div>
 
+<div class="rmas col">
+<h4>RMAs</h4>
 <% if (rmas) { rmas.map((i) => { %>
 <details><summary>RMA: <%= i["RMA Number"] %></summary>
 <ul>
@@ -83,7 +89,10 @@
 </ul>
 </details>
 <% })} %>
+</div>
 
+<div class="devices col">
+<h4>Devices</h4>
 <% if (devices) { devices.map((i) => { %>
 <details><summary>Device: <%= i["Serial Number"] %></summary>
 <ul>
@@ -93,7 +102,6 @@
 </ul>
 </details>
 <% })} %>
-
 </div>
 
-<% } %>
+</div>
