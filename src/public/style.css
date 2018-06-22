@@ -140,6 +140,23 @@ h4 {
     width: 33%;
 }
 
+.property-list {
+    display: table;
+}
+
+.property {
+    display: table-row;
+}
+
+.property-label {
+    display: table-cell;
+    padding: 5px 5px 0 5px;
+}
+.property-value {
+    display: table-cell;
+    padding: 5px 10px 0 10px;
+}
+
 details {
     border: 1px solid #E1E1E1;
     border-radius: 5px;

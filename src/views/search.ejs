@@ -69,11 +69,15 @@
 <h4>Orders</h4>
 <% if (orders) { orders.map((i) => { %>
 <details><summary>Order: <%= i["Order Number"] %></summary>
-<ul>
+<div class="property-list">
 <% Object.keys(i).map((k) => { %>
-<li><b><%= k %></b>: <%= i[k] %></li>
+<hr/>
+<div class="property">
+<div class="property-label"><b><%= k %></b>: </div>
+<div class="property-value"><%= i[k] %></li></div>
+</div>
 <% }) %>
-</ul>
+</div>
 </details>
 <% })} %>
 </div>
@@ -82,11 +86,15 @@
 <h4>RMAs</h4>
 <% if (rmas) { rmas.map((i) => { %>
 <details><summary>RMA: <%= i["RMA Number"] %></summary>
-<ul>
+<div class="property-list">
 <% Object.keys(i).map((k) => { %>
-<li><b><%= k %></b>: <%= i[k] %></li>
+<hr/>
+<div class="property">
+<div class="property-label"><b><%= k %></b>: </div>
+<div class="property-value"><%= i[k] %></li></div>
+</div>
 <% }) %>
-</ul>
+</div>
 </details>
 <% })} %>
 </div>
@@ -95,11 +103,15 @@
 <h4>Devices</h4>
 <% if (devices) { devices.map((i) => { %>
 <details><summary>Device: <%= i["Serial Number"] %></summary>
-<ul>
+<div class="property-list">
 <% Object.keys(i).map((k) => { %>
-<li><b><%= k %></b>: <%= i[k] %></li>
+<hr/>
+<div class="property">
+<div class="property-label"><b><%= k %></b>: </div>
+<div class="property-value"><%= i[k] %></li></div>
+</div>
 <% }) %>
-</ul>
+</div>
 </details>
 <% })} %>
 </div>
