@@ -1,0 +1,60 @@
+<!-- views/check_order.ejs -->
+<div class="form-header">
+<a href="/" class="red link btn">Back to Main Page</a>
+</div>
+<div class="form-header">
+  <% if (Object.keys(errors).length === 0) { %>
+    <h2>Enter Order Number</h2>
+  <% } else { %>
+    <h2 class="errors-heading">Oops, please correct the following:</h2>
+    <ul class="errors-list">
+      <% Object.values(errors).forEach(error => { %>
+        <li><%= error.msg %></li>
+      <% }) %>
+    </ul>
+  <% } %>
+</div>
+
+<form method="post" action="/check_order" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <!--
+  <div class="form-field <%= errors.message ? 'form-field-invalid' : '' %>">
+    <label for="message">Message</label>
+    <textarea class="input" id="message" name="message" rows="4" autofocus><%= data.message %></textarea>
+    <% if (errors.message) { %>
+      <div class="error"><%= errors.message.msg %></div>
+    <% } %>
+  </div>
+  <div class="form-field <%= errors.email ? 'form-field-invalid' : '' %>">
+    <label for="email">Email</label>
+    <input class="input" id="email" name="email" type="email" value="<%= data.email %>" />
+    <% if (errors.email) { %>
+      <div class="error"><%= errors.email.msg %></div>
+    <% } %>
+  </div>
+  -->
+  <div class="form-field <%= errors.query ? 'form-field-invalid' : '' %>">
+    <label for="query">Order Number</label>
+    <input class="input" id="query" name="query" value="<%= search.query %>" />
+    <% if (errors.query) { %>
+      <div class="error"><%= errors.query.msg %></div>
+    <% } %>
+  </div>
+  <div class="form-actions">
+    <button class="btn" type="submit">Search</button>
+  </div>
+</form>
+<% if (search.query) { %>
+<div class="">
+<h4>Search result for order <font color="blue"><%= search.query %></font>:</h4>
+<% if (items) { items.map((i) => { %>
+<details><summary><%= Object.keys(i)[0] %>: <%= i[Object.keys(i)[0]] %></summary>
+<ul>
+<% Object.keys(i).map((k) => { %>
+<li><b><%= k %></b>: <%= i[k] %></li>
+<% }) %>
+</ul>
+</details>
+<% })} %>
+</div>
+<% } %>

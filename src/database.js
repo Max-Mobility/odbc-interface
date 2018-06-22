@@ -52,12 +52,6 @@ db.open(cn, function (err) {
     console.log(`Connected: ${db.connected}`);
 });
 
-function checkRMA(rma) {
-}
-
-function checkOrder(order) {
-}
-
 function lookup(opts) {
     return new Promise((resolve, reject) => {
 
@@ -89,6 +83,28 @@ function lookup(opts) {
                 resolve(data);
             }
         });
+    });
+}
+
+function checkRMA(rma) {
+    return lookup({
+        '_table': 'RmaMaster',
+        'queries': [
+            {
+                RmaNumber: rma
+            }
+        ]
+    });
+}
+
+function checkOrder(order) {
+    return lookup({
+        '_table': 'SorMaster',
+        'queries': [
+            {
+                SalesOrder: order
+            }
+        ]
     });
 }
 

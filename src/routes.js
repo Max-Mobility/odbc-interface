@@ -57,11 +57,26 @@ router.post('/check_rma', [
         }));
     }
 
-    const data = matchedData(req)
-    console.log('Sanitized:', data);
-    // do something with sanitized data
-    req.flash('success', 'Thanks for the message! I will be in touch :)');
-    res.redirect('/');
+    const data = matchedData(req);
+    value = data.query;
+
+    var context = Object.assign(templateContext(), {
+        data: req.body, // { message, email },
+        errors: {},
+        items: [],
+        csrfToken: req.csrfToken()
+    });
+    db.checkRMA(value).then((data) => {
+        console.log('rendering data!');
+        context.items = data;
+        res.render('check_rma', context);
+    }).catch((err) => {
+        console.log('caught error!');
+        context.errors.server = {
+            msg: err.message
+        }
+        res.render('check_rma', context);
+    });
 })
 
 // Order page
@@ -89,10 +104,25 @@ router.post('/check_order', [
     }
 
     const data = matchedData(req)
-    console.log('Sanitized:', data);
-    // do something with sanitized data
-    req.flash('success', 'Thanks for the message! I will be in touch :)');
-    res.redirect('/');
+    value = data.query;
+
+    var context = Object.assign(templateContext(), {
+        data: req.body, // { message, email },
+        errors: {},
+        items: [],
+        csrfToken: req.csrfToken()
+    });
+    db.checkOrder(value).then((data) => {
+        console.log('rendering data!');
+        context.items = data;
+        res.render('check_order', context);
+    }).catch((err) => {
+        console.log('caught error!');
+        context.errors.server = {
+            msg: err.message
+        }
+        res.render('check_order', context);
+    });
 })
 
 // search page
@@ -143,9 +173,6 @@ router.post('/search', [
         'queries': [
             {
                 [field]: value
-            },
-            {
-                'CustomerPoNumber': '663-8M0685'
             }
         ]
     };
