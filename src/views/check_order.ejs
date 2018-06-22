@@ -51,13 +51,13 @@
 <div class="orders col" style="width: 100%">
 <h4>Search result for order <font color="blue"><%= search.query %></font>:</h4>
 <% if (items) { items.map((i) => { %>
-<details><summary>Order: <%= i["SalesOrder"] %></summary>
+<details open><summary>Order: <%= i["SalesOrder"] %></summary>
 <div class="property-list">
 <% Object.keys(i).sort().map((k) => { %>
 <hr/>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>
-<div class="property-value"><%= i[k] %></li></div>
+<div class="property-value"><pre><%= i[k] %></pre></div>
 </div>
 <% }) %>
 </div>

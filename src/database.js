@@ -1,13 +1,25 @@
 
+const fieldToEntry = {
+    "Serial Number": "Inventory (Master)",
+    "Email": "Customers",
+    "Sales Order Number": "Sales Orders (Master)",
+    "Customer Number": "Customers",
+    "Customer Name": "Customers",
+    "PO Number": "Sales Orders (Master)",
+    "RMA Number": "RMA (Master)"
+};
+
 const fieldMap = {
-    "SmartDrive Serial Number": "Serial",
-    "PushTracker Serial Number": "Serial",
+    "Serial Number": "Serial",
     "Email": "Email",
     "Sales Order Number": "SalesOrder",
     "Customer Number": "Customer",
     "Customer Name": "CustomerName",
     "PO Number": "CustomerPoNumber",
     "RMA Number": "RmaNumber"
+};
+
+const searchFields = {
 };
 
 const tableMap = {
@@ -59,6 +71,232 @@ function makeQueries(table, data) {
     });
     return q;
 }
+
+function combineShipping(input) {
+    return [
+        input.ShipAddress1,
+        input.ShipAddress2,
+        input.ShipAddress3,
+        input.ShipAddress3Loc,
+        input.ShipAddress4,
+        input.ShipAddress5,
+        input.ShipPostalCode
+    ].join('\n');
+}
+
+const types = {
+    "Customer": {
+        field: "Customer",
+        tables: [
+            "ArCustomer",
+            "ArCustomer+"
+        ],
+        inputMap: {
+            "Name": 'Name',
+            "Number": 'Customer',
+            "Telephone": 'Telephone',
+            "Contact": 'Contact',
+        },
+        create: function(input) {
+            var o = Object.keys(this.inputMap).reduce((a, e) => {
+                a[e] = input[this.inputMap[e]];
+                return a;
+            }, {});
+            return o;
+        }
+    },
+    "Order": {
+        field: "SalesOrder",
+        tables: [
+            "SorMaster",
+            "SorDetail"
+        ],
+        customerUpdate: function (input, customer) {
+        },
+        inputMap: {
+            'Order Number': "SalesOrder",
+            'Email': "Email",
+            'Customer Name': "CustomerName",
+            'Customer Number': "Customer",
+            'PO Number': "CustomerPoNumber",
+            'Status': "OrderStatus",
+            'Order Date': "OrderDate",
+            'Requested Ship Date': "ReqShipDate",
+            'Shipping Instructions': "ShippingInstrs",
+            'Cash or Credit': "CashCredit",
+            'Last Invoice': "LastInvoice",
+            'Last Operator': "LastOperator",
+            'Job': "Job",
+            'Serialised?': "SerialisedFlag",
+            'Jobs Exist?': "JobsExistFlag",
+        },
+        create: function(input, customer) {
+            /*
+            // customer
+            customer["Number"] = input.Customer;
+            customer["Name"] = input.CustomerName;
+            customer["Email"] = input.Email;
+            */
+            var o = Object.keys(this.inputMap).reduce((a, e) => {
+                a[e] = input[this.inputMap[e]];
+                return a;
+            }, {});
+            o["Shipping Address"] = combineShipping(input);
+            return o;
+        }
+    },
+    "RMA": {
+        field: "RmaNumber",
+        tables: [
+            "RmaMaster",
+            "RmaMaster+",
+            "RmaDetail",
+            "RmaDetailSer",
+        ],
+        inputMap: {
+            "RMA Number": 'RmaNumber',
+            "Status": 'Status',
+            "Customer Number": 'Customer',
+            "Customer Name": 'CustomerName',
+            "Operator": 'Operator',
+            "Entry Date": 'EntryDate',
+            "Last Transaction Date": 'LastTranactDate',
+            "Special Instructions": 'SpecialInstrs',
+            "Service Ticket": 'ServiceTicket',
+            "Serial Number": 'Serial'
+        },
+        create: function(input) {
+            var o = Object.keys(this.inputMap).reduce((a, e) => {
+                a[e] = input[this.inputMap[e]];
+                return a;
+            }, {});
+            o["Shipping Address"] = combineShipping(input);
+            return o;
+        } 
+    },
+    "Device": {
+        field: "Serial",
+        tables: [
+            "InvSerialHead",
+            "InvSerialHead+",
+            "InvSerialTrn"
+        ],
+        inputMap: {
+            'Customer Number': "Customer",
+            'Stock Code': 'StockCode',
+            'Serial Number': 'Serial',
+            'Description': 'SerialDescription',
+            'Service Flag': 'ServiceFlag',
+        },
+        create: function(input, output, customer) {
+            var o = Object.keys(this.inputMap).reduce((a, e) => {
+                a[e] = input[this.inputMap[e]];
+                return a;
+            }, {});
+            return o;
+        }
+    }
+};
+
+function getCustomer(customer_number) {
+    // Loop through our tables
+    var tasks = types.Customer.tables.map((t) => {
+        var lu = {
+            table: t,
+            queries: [
+                {
+                    "Customer": padNumber(customer_number)
+                }
+            ]
+        };
+        return lookup(lu);
+    });
+    return Promise.all(tasks).then((dataArray) => {
+        return dataArray.reduce((a, e) => {
+            var o = ( e && e.length ) ? e[0] : {};
+            return Object.assign({}, a, o);
+        }, {});
+    }).then((obj) => {
+        return types.Customer.create(obj);
+    }).catch((err) => {
+        console.log(`cannot get customer: ${err}`);
+    });
+};
+
+function getRMA(rma_number) {
+    // Loop through our tables
+    var tasks = types.RMA.tables.map((t) => {
+        var lu = {
+            table: t,
+            queries: [
+                {
+                    "RmaNumber": padNumber(rma_number)
+                }
+            ]
+        };
+        return lookup(lu);
+    });
+    return Promise.all(tasks).then((dataArray) => {
+        return dataArray.reduce((a, e) => {
+            var o = ( e && e.length ) ? e[0] : {};
+            return Object.assign({}, a, o);
+        }, {});
+    }).then((obj) => {
+        return types.RMA.create(obj);
+    }).catch((err) => {
+        console.log(`cannot get rma: ${err}`);
+    });
+};
+
+function getDevice(serial_number) {
+    // Loop through our tables
+    var tasks = types.Device.tables.map((t) => {
+        var lu = {
+            table: t,
+            queries: [
+                {
+                    "Serial": serial_number
+                }
+            ]
+        };
+        return lookup(lu);
+    });
+    return Promise.all(tasks).then((dataArray) => {
+        return dataArray.reduce((a, e) => {
+            var o = ( e && e.length ) ? e[0] : {};
+            return Object.assign({}, a, o);
+        }, {});
+    }).then((obj) => {
+        return types.Device.create(obj);
+    }).catch((err) => {
+        console.log(`cannot get device: ${err}`);
+    });
+};
+
+function getOrder(order_number) {
+    // Loop through our tables
+    var tasks = types.Order.tables.map((t) => {
+        var lu = {
+            table: t,
+            queries: [
+                {
+                    "SalesOrder": padNumber(order_number)
+                }
+            ]
+        };
+        return lookup(lu);
+    })
+    return Promise.all(tasks).then((dataArray) => {
+        return dataArray.reduce((a, e) => {
+            var o = ( e && e.length ) ? e[0] : {};
+            return Object.assign({}, a, o);
+        }, {});
+    }).then((obj) => {
+        return types.Order.create(obj);
+    }).catch((err) => {
+        console.log(`cannot get order: ${err}`);
+    });
+};
 
 const tables = {
     "SorMaster": {
@@ -228,7 +466,6 @@ const tables = {
             "ServiceFlag",
         ],
         "makeObject": function(input, output, customer) {
-            console.log(input);
             output['Stock Code'] = input.StockCode;
             output['Serial Number'] = input.Serial;
             output['Description'] = input.SerialDescription;
@@ -283,7 +520,7 @@ db.open(cn, function (err) {
 function lookup(opts) {
     return new Promise((resolve, reject) => {
 
-        var table = opts._table;
+        var table = opts.table;
 
         var query = `select * from [${table}]`;
         if (opts.queries.length) {
@@ -315,8 +552,8 @@ function lookup(opts) {
 function checkRMA(rma) {
     var obj = {};
     return lookup({
-        '_table': 'RmaMaster',
-        'queries': [
+        table: 'RmaMaster',
+        queries: [
             {
                 RmaNumber: rma
             }
@@ -324,8 +561,8 @@ function checkRMA(rma) {
     }).then((data) => {
         obj = Object.assign(obj, (data && data[0]) || {});
         return lookup({
-            '_table': 'RmaMaster+',
-            'queries': [
+            table: 'RmaMaster+',
+            queries: [
                 {
                     RmaNumber: rma
                 }
@@ -334,8 +571,8 @@ function checkRMA(rma) {
     }).then((data) => {
         obj = Object.assign(obj, (data && data[0]) || {});
         return lookup({
-            '_table': 'RmaDetail',
-            'queries': [
+            table: 'RmaDetail',
+            queries: [
                 {
                     RmaNumber: rma
                 }
@@ -344,8 +581,8 @@ function checkRMA(rma) {
     }).then((data) => {
         obj = Object.assign(obj, (data && data[0]) || {});
         return lookup({
-            '_table': 'RmaDetailSer',
-            'queries': [
+            table: 'RmaDetailSer',
+            queries: [
                 {
                     RmaNumber: rma
                 }
@@ -360,8 +597,8 @@ function checkRMA(rma) {
 function checkOrder(order) {
     var obj = {};
     return lookup({
-        '_table': 'SorMaster',
-        'queries': [
+        table: 'SorMaster',
+        queries: [
             {
                 SalesOrder: order
             }
@@ -369,8 +606,8 @@ function checkOrder(order) {
     }).then((data) => {
         obj = Object.assign(obj, (data && data[0]) || {});
         return lookup({
-            '_table': 'SorDetail',
-            'queries': [
+            table: 'SorDetail',
+            queries: [
                 {
                     SalesOrder: order
                 }
@@ -383,14 +620,22 @@ function checkOrder(order) {
 }
 
 module.exports = {
-    padNumber,
-    tables,
-    makeQueries,
-    fieldMap,
-    tableMap,
+    // functions for objects
+    getCustomer,
+    getRMA,
+    getDevice,
+    getOrder,
     checkRMA,
     checkOrder,
     lookup,
+    // utilities
+    padNumber,
+    makeQueries,
+    // maps / lists
+    tables,
+    fieldMap,
+    tableMap,
+    // db object
     db
 };
 // END DATABASE

@@ -142,19 +142,24 @@ h4 {
 
 .property-list {
     display: table;
+    width: 100%;
 }
 
 .property {
     display: table-row;
+    width: 100%;
 }
 
 .property-label {
+    vertical-align: middle;
     display: table-cell;
     padding: 5px 5px 0 5px;
 }
 .property-value {
+    vertical-align: middle;
     display: table-cell;
     padding: 5px 10px 0 10px;
+    background: #fff;
 }
 
 details {

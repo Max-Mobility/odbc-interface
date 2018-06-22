@@ -25,7 +25,6 @@ var templateContext = function() {
     return {
         fields: fields,
         tables: tables,
-        items: [],
         // actual data
         customer: {},
         orders: [],
@@ -48,8 +47,9 @@ router.get('/', (req, res) => {
 // RMA page
 router.get('/check_rma', (req, res) => {
     res.render('check_rma', Object.assign(templateContext(), {
-        data: req.body, // { message, email }
+        data: req.body,
         errors: {},
+        items: [],
         csrfToken: req.csrfToken()
     }));
 });
@@ -65,22 +65,23 @@ router.post('/check_rma', [
         return res.render('check_rma', Object.assign(templateContext(), {
             data: req.body,
             errors: errors.mapped(),
+            items: [],
             csrfToken: req.csrfToken()
         }));
     }
 
     const data = matchedData(req);
-    value = db.padNumber(data.query);
+    value = data.query;
 
     var context = Object.assign(templateContext(), {
-        data: req.body, // { message, email },
+        data: req.body,
         errors: {},
         items: [],
         csrfToken: req.csrfToken()
     });
-    db.checkRMA(value).then((data) => {
+    db.getRMA(value).then((rma) => {
         console.log('rendering data!');
-        context.items = data;
+        context.items = [rma];
         res.render('check_rma', context);
     }).catch((err) => {
         console.log('caught error!');
@@ -94,8 +95,9 @@ router.post('/check_rma', [
 // Order page
 router.get('/check_order', (req, res) => {
     res.render('check_order', Object.assign(templateContext(), {
-        data: req.body, // { message, email }
+        data: req.body,
         errors: {},
+        items: [],
         csrfToken: req.csrfToken()
     }));
 });
@@ -110,23 +112,24 @@ router.post('/check_order', [
     if (!errors.isEmpty()) {
         return res.render('check_order', Object.assign(templateContext(), {
             data: req.body,
+            items: [],
             errors: errors.mapped(),
             csrfToken: req.csrfToken()
         }));
     }
 
     const data = matchedData(req)
-    value = db.padNumber(data.query);
+    value = data.query;
 
     var context = Object.assign(templateContext(), {
-        data: req.body, // { message, email },
+        data: req.body,
         errors: {},
         items: [],
         csrfToken: req.csrfToken()
     });
-    db.checkOrder(value).then((data) => {
+    db.getOrder(value).then((order) => {
         console.log('rendering data!');
-        context.items = data;
+        context.items = [order];
         res.render('check_order', context);
     }).catch((err) => {
         console.log('caught error!');
@@ -140,23 +143,13 @@ router.post('/check_order', [
 // search page
 router.get('/search', (req, res) => {
     res.render('search', Object.assign(templateContext(), {
-        data: req.body, // { message, email },
+        data: req.body,
         errors: {},
         csrfToken: req.csrfToken()
     }));
 });
 
 router.post('/search', [
-/*
-    check('query')
-        .trim(),
-    check('searchTable')
-        .isLength({ min: 1 })
-        .trim(),
-    check('searchField')
-        .isLength({ min: 1 })
-        .trim()
-*/
 ], (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -174,16 +167,9 @@ router.post('/search', [
         }
         return a;
     }, {});
-    /*
-    console.log(input);
-    console.log('Unsanitized:', req.body);
-    console.log('Sanitized:', data);
-    var field = db.fieldMap[fieldName];
-    console.log(lookupOpts);
-    */
 
     var context = Object.assign(templateContext(), {
-        data: req.body, // { message, email },
+        data: req.body,
         errors: {},
         csrfToken: req.csrfToken()
     });
@@ -195,12 +181,24 @@ router.post('/search', [
     
     // NEED LOGIC HERE TO DETERMINE WHICH ORDER TO SEARCH THROUGH
 
+    // get customer # first (device, rma, order) then get other related fields
+
+    if (input['Customer']) {
+        db.getCustomer(input['Customer']);
+    } else if (input['RmaNumber']) {
+        db.getRMA(input['RmaNumber']);
+    } else if (input['Serial']) {
+        db.getDevice(input['Serial']);
+    } else if (input['SalesOrder']) {
+        db.getOrder(input['SalesOrder']);
+    }
+
     // look up from SorMaster
     var lookupOpts = {
-        '_table': 'SorMaster',
-        'queries': []
+        table: 'SorMaster',
+        queries: []
     };
-    lookupOpts.queries = db.makeQueries(lookupOpts._table, input);
+    lookupOpts.queries = db.makeQueries(lookupOpts.table, input);
     return new Promise((resolve, reject) => {
         if (lookupOpts.queries.length) {
             db.lookup(lookupOpts).then((data) => resolve(data)).catch((err) => reject(err));
@@ -216,8 +214,8 @@ router.post('/search', [
         });
         // Look up from ArCustomer
         lookupOpts = {
-            '_table': 'ArCustomer',
-            'queries': [
+            table: 'ArCustomer',
+            queries: [
             ]            
         };
         if (customer.Number) {
@@ -235,8 +233,8 @@ router.post('/search', [
         });
         // Look up from RmaMaster
         lookupOpts = {
-            '_table': 'RmaMaster',
-            'queries': []
+            table: 'RmaMaster',
+            queries: []
         };
         if (req.body["RMA Number"]) {
             lookupOpts.queries.push({
@@ -260,12 +258,12 @@ router.post('/search', [
         });
         // Look up from InvSerialHead
         lookupOpts = {
-            '_table': 'InvSerialHead',
-            'queries': []
+            table: 'InvSerialHead',
+            queries: []
         };
-        if (req.body["SmartDrive Serial Number"] || req.body["PushTracker Serial Number"]) {
+        if (req.body["Serial Number"]) {
             lookupOpts.queries.push({
-                'Serial': req.body["SmartDrive Serial Number"] || req.body["PushTracker Serial Number"]
+                'Serial': req.body["Serial Number"]
             });
             return db.lookup(lookupOpts);
         } else if (customer.Number) {
