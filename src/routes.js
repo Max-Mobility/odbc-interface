@@ -4,6 +4,9 @@ const router = express.Router()
 const { check, validationResult } = require('express-validator/check')
 const { matchedData } = require('express-validator/filter')
 
+function makeID(s) {
+    return s;//.replace(/ /gm, '_');
+}
 
 var tableName = null,
     fieldName = null,
@@ -11,20 +14,29 @@ var tableName = null,
 var templateContext = function() {
     const fields=Object.keys(db.fieldMap).map((f) => { return {
         title: f,
-        selected: f==fieldName
+        selected: f==fieldName,
+        id: makeID(f)
     }});
     const tables=Object.keys(db.tableMap).map((f) => { return {
         title: f,
-        selected: f==tableName
+        selected: f==tableName,
+        id: makeID(f)
     }});
     return {
         fields: fields,
         tables: tables,
         items: [],
+        // actual data
+        customer: {},
+        orders: [],
+        rmas: [],
+        devices: [],
+        // end actual data
         search: {
             table: tableName,
-            field: fieldName,
-            query: value
+            query: value,
+            queries: [
+            ]
         }
     };
 }
@@ -135,6 +147,7 @@ router.get('/search', (req, res) => {
 });
 
 router.post('/search', [
+/*
     check('query')
         .trim(),
     check('searchTable')
@@ -143,6 +156,7 @@ router.post('/search', [
     check('searchField')
         .isLength({ min: 1 })
         .trim()
+*/
 ], (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -153,43 +167,99 @@ router.post('/search', [
         }));
     }
 
-    const data = matchedData(req)
-    //console.log('Sanitized:', data);
-    tableName = data.searchTable;
-    fieldName = data.searchField;
-    value = data.query;
-    var table = db.tableMap[tableName];
+    const fields = Object.keys(db.fieldMap);
+    const input = Object.keys(req.body).reduce((a, e) => {
+        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
+            a[db.fieldMap[e]] = req.body[e];
+        }
+        return a;
+    }, {});
+    /*
+    console.log(input);
+    console.log('Unsanitized:', req.body);
+    console.log('Sanitized:', data);
     var field = db.fieldMap[fieldName];
+    console.log(lookupOpts);
+    */
 
     var context = Object.assign(templateContext(), {
         data: req.body, // { message, email },
         errors: {},
-        items: [],
         csrfToken: req.csrfToken()
     });
 
+    var customer = {};
+    var orders = []   // get orders here
+    var rmas = [];    // get rmas here
+    var devices = []; // get serial numbers and such here
+    
+    // NEED LOGIC HERE TO DETERMINE WHICH ORDER TO SEARCH THROUGH
+
+    // look up from SorMaster
     var lookupOpts = {
-        '_table': table,
-        'queries': [
-            {
-                [field]: value
-            }
-        ]
+        '_table': 'SorMaster',
+        'queries': []
     };
+    lookupOpts.queries = db.makeQueries(lookupOpts._table, input);
     db.lookup(lookupOpts).then((data) => {
+        // PULL OUT DATA
+        data.map((d) => {
+            var sor = {};
+            db.tables.SorMaster.makeObject(d, sor, customer);
+            orders.push(sor);
+        });
+        // Look up from ArCustomer
+        lookupOpts = {
+            '_table': 'ArCustomer',
+            'queries': []
+        };
+        return [];
+    }).then((data) => {
+        // PULL OUT DATA
+        data.map((d) => {
+            db.tables.ArCustomer.makeObject(d, {}, customer);
+        });
+        // Look up from RmaMaster
+        lookupOpts = {
+            '_table': 'RmaMaster',
+            'queries': []
+        };
+        return [];
+    }).then((data) => {
+        // PULL OUT DATA
+        data.map((d) => {
+            var rma = {};
+            db.tables.RmaMaster.makeObject(d, {}, customer);
+            rmas.push(rma);
+        });
+        // Look up from InvSerialHead
+        lookupOpts = {
+            '_table': 'InvSerialHead',
+            'queries': []
+        };
+        return [];
+    }).then((data) => {
+        // PULL OUT DATA
+        data.map((d) => {
+            var dev = {};
+            db.tables.InvSerialHead.makeObject(d, {}, customer);
+            devices.push(dev);
+        });
+        // now render the data
+        context.customer = customer;
+        context.orders = orders;
+        context.rmas = rmas;
+        context.devices = devices;
         console.log('rendering data!');
-        context.items = data;
         res.render('search', context);
     }).catch((err) => {
+        // got an error - render it!
         console.log('caught error!');
         context.errors.server = {
             msg: err.message
         }
         res.render('search', context);
     });
-    
-    //req.flash('success', 'Thanks for the message! I will be in touch :)');
-    //res.redirect('/search');
 })
 
 module.exports = router

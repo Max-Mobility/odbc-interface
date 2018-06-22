@@ -2,7 +2,6 @@
 const fieldMap = {
     "SmartDrive Serial Number": "Serial",
     "PushTracker Serial Number": "Serial",
-    "Mark For": null,
     "Email": "Email",
     "Sales Order Number": "SalesOrder",
     "Customer Number": "Customer",
@@ -26,6 +25,148 @@ const tableMap = {
     "Inventory Serial CrossRef": "InvSerialCrossRef",
     "Inventory Serial Transaction": "InvSerialTrn",
 };
+
+function makeQueries(table, data) {
+    var q = [];
+    tables[table].fields.map((f) => {
+        if (data[f]) {
+            q.push({
+                [f]: data[f]
+            });
+        }
+    });
+    return q;
+}
+
+const tables = {
+    "SorMaster": {
+        "fields": [
+            "SalesOrder",
+            "Customer",
+            "CustomerPoNumber",
+            "Email",
+            "LastOperator",
+            "ShippingInstrs",
+            "CustomerName",
+            "ShipAddress1",
+            "ShipAddress2",
+            "ShipAddress3",
+            "ShipAddress4",
+            "ShipAddress5",
+        ],
+        "makeObject": function(input, output, customer) {
+            output["Order Number"] = input.SalesOrder;
+            output["PO Number"] = input.CustomerPoNumber;
+            output["Email"] = input.SalesOrder;
+            output["Customer Name"] = input.CustomerName;
+            output["Customer Number"] = input.Customer;
+            output["Last Operator"] = input.LastOperator;
+            output["Shipping Address"] = [
+                input.ShipAddress1,
+                input.ShipAddress2,
+                input.ShipAddress3,
+                input.ShipAddress4,
+                input.ShipAddress5,
+            ].join('\n');
+        }
+    },
+    "SorDetail": {
+        "searchBy": [
+            "SalesOrder"
+        ],
+        "fields": [
+            "MStockCode",
+            "MStockDes",
+            "MorderQty"
+        ],
+        "makeObject": function(input, output, customer) { }
+    },
+    "ArCustomer": {
+        "searchBy": [
+            "Customer"
+        ],
+        "fields": [
+            "Name",
+            "Telephone",
+            "Contact",
+            // SoldTo*?
+            // ShipTo*?
+        ],
+        "makeObject": function(input, output, customer) {
+            customer["Name"] = input.Name;
+            customer["Telephone"] = input.Telephone;
+            customer["Contact"] = input.Contact;
+        }
+    },
+    "ArCustomer+": {
+        "fields": [
+        ],
+        "makeObject": function(input, output, customer) { }
+    },
+    "RmaMaster": {
+        "searchBy": [
+            "Customer"
+        ],
+        "fields": [
+        ],
+        "makeObject": function(input, output, customer) {
+            console.log(Object.keys(input));
+            output["RMA Number"] = input.RmaNumber;
+        }
+    },
+    "RmaMaster+": {
+        "fields": [
+        ],
+        "makeObject": function(input, output, customer) { }
+    },
+    "RmaDetail": {
+        "fields": [
+        ],
+        "makeObject": function(input, output, customer) { }
+    },
+    "InvMaster": {
+        "fields": [
+        ],
+        "makeObject": function(input, output, customer) { }
+    },
+    "InvMaster+": {
+        "fields": [
+        ],
+        "makeObject": function(input, output, customer) { }
+    },
+    "InvSerialHead": {
+        "searchBy": [
+            "Customer",
+        ],
+        "fields": [
+            "StockCode",
+            "Serial",
+            "SerialDescription",
+            "ServiceFlag",
+        ],
+        "makeObject": function(input, output, customer) {
+            output['Stock Code'] = input.StockCode;
+            output['Serial Number'] = input.Serial;
+            output['Description'] = input.SerialDescription;
+            output['Service Flag'] = input.ServiceFlag;
+        }
+    },
+    "InvSerialHead+": {
+        "fields": [
+        ],
+        "makeObject": function(input, output, customer) { }
+    },
+    "InvSerialCrossRef": {
+        "fields": [
+        ],
+        "makeObject": function(input, output, customer) { }
+    },
+    "InvSerialTrn": {
+        "fields": [
+        ],
+        "makeObject": function(input, output, customer) { }
+    },
+}
 
 
 // InvSerialHead
@@ -65,7 +206,7 @@ function lookup(opts) {
             Object.entries(q).map(e => {
                 var k = e[0],
                     v = e[1];
-                console.log(e);
+                //console.log(e);
                 if (v && v.length) {
                     query += ` ${k}='${v}' AND`;
                 }
@@ -76,10 +217,8 @@ function lookup(opts) {
 
         db.query(query, (err, data) => {
             if (err) {
-                console.log('Got error!');
                 reject(err);
             } else {
-                console.log('Got data!');
                 resolve(data);
             }
         });
@@ -109,6 +248,8 @@ function checkOrder(order) {
 }
 
 module.exports = {
+    tables,
+    makeQueries,
     fieldMap,
     tableMap,
     checkRMA,

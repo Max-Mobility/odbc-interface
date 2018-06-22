@@ -1,4 +1,4 @@
-<!-- views/contact.ejs -->
+<!-- views/search.ejs -->
 <div class="form-header">
 <a href="/" class="red link btn">Back to Main Page</a>
 </div>
@@ -17,6 +17,7 @@
 
 <form method="post" action="/search" novalidate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <!--
   <div class="form-field <%= errors.searchTable ? 'form-field-invalid' : '' %>">
     <label>Table</label>
     <select name="searchTable">
@@ -33,22 +34,6 @@
       <% } %>
     </select>
   </div>
-  <!--
-  <div class="form-field <%= errors.message ? 'form-field-invalid' : '' %>">
-    <label for="message">Message</label>
-    <textarea class="input" id="message" name="message" rows="4" autofocus><%= data.message %></textarea>
-    <% if (errors.message) { %>
-      <div class="error"><%= errors.message.msg %></div>
-    <% } %>
-  </div>
-  <div class="form-field <%= errors.email ? 'form-field-invalid' : '' %>">
-    <label for="email">Email</label>
-    <input class="input" id="email" name="email" type="email" value="<%= data.email %>" />
-    <% if (errors.email) { %>
-      <div class="error"><%= errors.email.msg %></div>
-    <% } %>
-  </div>
-  -->
   <div class="form-field <%= errors.query ? 'form-field-invalid' : '' %>">
     <label for="query">Search Query</label>
     <input class="input" id="query" name="query" value="<%= search.query %>" />
@@ -56,15 +41,31 @@
       <div class="error"><%= errors.query.msg %></div>
     <% } %>
   </div>
+  -->
+  <% for (var field in fields) { let f = fields[field]; %>
+  <div class="form-field <%= errors[f.title] ? 'form-field-invalid' : '' %>">
+    <label><%= f.title %></label>
+    <input class="input" id="<%= f.id %>" name="<%= f.id %>" value="<%= data[f.title] %>" />
+    <% if (errors[f.title]) { %>
+      <div class="error"><%= errors[f.title].msg %></div>
+    <% } %>
+  </div>
+  <% } %>
   <div class="form-actions">
     <button class="btn" type="submit">Search</button>
   </div>
 </form>
-<% if (search.query) { %>
+
+<% if (customer !== null && customer !== undefined) { %>
+
 <div class="">
-<h4>Search result for query <font color="blue"><%= search.query %></font> of type <font color="blue"><%= search.field %></font> from table <font color="blue"><%= search.table %></font>:</h4>
-<% if (items) { items.map((i) => { %>
-<details><summary><%= Object.keys(i)[0] %>: <%= i[Object.keys(i)[0]] %></summary>
+<h4>Customer <font color="blue"><%= customer.Name %></font></h4>
+</div>
+
+<div class="">
+
+<% if (orders) { orders.map((i) => { %>
+<details><summary>Order: <%= i["Order Number"] %></summary>
 <ul>
 <% Object.keys(i).map((k) => { %>
 <li><b><%= k %></b>: <%= i[k] %></li>
@@ -72,5 +73,27 @@
 </ul>
 </details>
 <% })} %>
+
+<% if (rmas) { rmas.map((i) => { %>
+<details><summary>RMA: <%= i["RMA Number"] %></summary>
+<ul>
+<% Object.keys(i).map((k) => { %>
+<li><b><%= k %></b>: <%= i[k] %></li>
+<% }) %>
+</ul>
+</details>
+<% })} %>
+
+<% if (devices) { devices.map((i) => { %>
+<details><summary>Device: <%= i["Serial Number"] %></summary>
+<ul>
+<% Object.keys(i).map((k) => { %>
+<li><b><%= k %></b>: <%= i[k] %></li>
+<% }) %>
+</ul>
+</details>
+<% })} %>
+
 </div>
+
 <% } %>
