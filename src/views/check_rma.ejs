@@ -44,17 +44,26 @@
     <button class="btn" type="submit">Search</button>
   </div>
 </form>
+
+<div class="results" style="width: 50%">
+
 <% if (search.query) { %>
-<div class="">
+<div class="rmas col" style="width: 100%">
 <h4>Search result for RMA <font color="blue"><%= search.query %></font>:</h4>
 <% if (items) { items.map((i) => { %>
 <details><summary><%= Object.keys(i)[0] %>: <%= i[Object.keys(i)[0]] %></summary>
-<ul>
+<div class="property-list">
 <% Object.keys(i).map((k) => { %>
-<li><b><%= k %></b>: <%= i[k] %></li>
+<hr/>
+<div class="property">
+<div class="property-label"><b><%= k %></b>: </div>
+<div class="property-value"><%= i[k] %></li></div>
+</div>
 <% }) %>
-</ul>
+</div>
 </details>
 <% })} %>
 </div>
 <% } %>
+
+</div>

@@ -238,7 +238,12 @@ router.post('/search', [
             '_table': 'RmaMaster',
             'queries': []
         };
-        if (customer.Number) {
+        if (req.body["RMA Number"]) {
+            lookupOpts.queries.push({
+                'RmaNumber': req.body["RMA Number"]
+            });
+            return db.lookup(lookupOpts);
+        } else if (customer.Number) {
             lookupOpts.queries.push({
                 'Customer': customer.Number
             });
