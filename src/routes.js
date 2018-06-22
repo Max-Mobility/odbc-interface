@@ -43,15 +43,10 @@ router.get('/check_rma', (req, res) => {
 });
 
 router.post('/check_rma', [
-    check('message')
+    check('query')
         .isLength({ min: 1 })
-        .withMessage('Message is required')
-        .trim(),
-    check('email')
-        .isEmail()
-        .withMessage('That email doesn‘t look right')
+        .withMessage('RMA is required')
         .trim()
-        .normalizeEmail()
 ], (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -79,15 +74,10 @@ router.get('/check_order', (req, res) => {
 });
 
 router.post('/check_order', [
-    check('message')
+    check('query')
         .isLength({ min: 1 })
-        .withMessage('Message is required')
-        .trim(),
-    check('email')
-        .isEmail()
-        .withMessage('That email doesn‘t look right')
+        .withMessage('Order is required')
         .trim()
-        .normalizeEmail()
 ], (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -141,26 +131,36 @@ router.post('/search', [
     var table = db.tableMap[tableName];
     var field = db.fieldMap[fieldName];
 
-    var query = `select * from [${table}]` +
-        (value && value.length && ` where ${field}='${value}'`);
-    console.log(query);
-    
-    db.db.query(query, (err, data) => {
-        var context = Object.assign(templateContext(), {
-            data: req.body, // { message, email },
-            errors: {},
-            items: data,
-            csrfToken: req.csrfToken()
-        });
-        if (err) {
-            console.log(err);
-            context.errors.server = {
-                msg: err.message
+    var context = Object.assign(templateContext(), {
+        data: req.body, // { message, email },
+        errors: {},
+        items: [],
+        csrfToken: req.csrfToken()
+    });
+
+    var lookupOpts = {
+        '_table': table,
+        'queries': [
+            {
+                [field]: value
+            },
+            {
+                'CustomerPoNumber': '663-8M0685'
             }
+        ]
+    };
+    db.lookup(lookupOpts).then((data) => {
+        console.log('rendering data!');
+        context.items = data;
+        res.render('search', context);
+    }).catch((err) => {
+        console.log('caught error!');
+        context.errors.server = {
+            msg: err.message
         }
-        console.log(err);
         res.render('search', context);
     });
+    
     //req.flash('success', 'Thanks for the message! I will be in touch :)');
     //res.redirect('/search');
 })

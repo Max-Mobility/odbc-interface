@@ -52,9 +52,52 @@ db.open(cn, function (err) {
     console.log(`Connected: ${db.connected}`);
 });
 
+function checkRMA(rma) {
+}
+
+function checkOrder(order) {
+}
+
+function lookup(opts) {
+    return new Promise((resolve, reject) => {
+
+        var table = opts._table;
+
+        var query = `select * from [${table}]`;
+        if (opts.queries.length) {
+            query += ' where';
+        }
+        opts.queries.map(q => {
+            Object.entries(q).map(e => {
+                var k = e[0],
+                    v = e[1];
+                console.log(e);
+                if (v && v.length) {
+                    query += ` ${k}='${v}' AND`;
+                }
+            });
+        });
+        query = query.replace(/AND$/, ';');
+        console.log(query);
+
+        db.query(query, (err, data) => {
+            if (err) {
+                console.log('Got error!');
+                reject(err);
+            } else {
+                console.log('Got data!');
+                resolve(data);
+            }
+        });
+    });
+}
+
 module.exports = {
     fieldMap,
     tableMap,
+    checkRMA,
+    checkOrder,
+    lookup,
     db
 };
 // END DATABASE
