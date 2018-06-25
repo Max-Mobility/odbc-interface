@@ -4,6 +4,17 @@ const router = express.Router()
 const { check, validationResult } = require('express-validator/check')
 const { matchedData } = require('express-validator/filter')
 
+const nodemailer = require('nodemailer');
+
+
+var transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'william@max-mobility.com',
+    pass: process.env.ODBC_EMAIL_PASSWORD
+  }
+});
+
 function makeID(s) {
     return s;//.replace(/ /gm, '_');
 }
@@ -30,6 +41,56 @@ var templateContext = function() {
 
 router.get('/', (req, res) => {
     res.render('index')
+});
+
+// feedback!
+router.get('/feedback', (req, res) => {
+    res.render('feedback', {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    });
+});
+
+router.post('/feedback', [
+    check('message')
+        .isLength({ min: 1 })
+        .withMessage('Message is required')
+        .trim(),
+    check('name')
+        .isLength({ min: 1 })
+        .withMessage('Name is required')
+        .trim()
+], (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.render('feedback', {
+            data: req.body,
+            errors: errors.mapped(),
+            csrfToken: req.csrfToken()
+        });
+    }
+
+    const data = matchedData(req)
+
+    var mailOptions = {
+        from: 'engineering@max-mobility.com',
+        to: 'engineering@max-mobility.com',
+        subject: 'Feedback on Syspro Web Search from ' + data.name,
+        text: data.message
+    };
+
+    transporter.sendMail(mailOptions, function(error, info) {
+        if (error) {
+            console.log('Mail failed: ' + error);
+            req.flash('failure', 'Could not send email - please find me!');
+            res.redirect('/');
+        } else {
+            console.log('Sent email: ' + info.response)
+            req.flash('success', 'Thanks for the feedback, I will look into it!');
+            res.redirect('/');
+        }
+    });
 });
 
 // RMA page

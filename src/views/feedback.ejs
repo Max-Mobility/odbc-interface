@@ -1,0 +1,37 @@
+<!-- views/feedback.ejs -->
+<div class="form-header">
+<a href="/" class="red link btn">Back to Main Page</a>
+</div>
+<div class="form-header">
+  <% if (Object.keys(errors).length === 0) { %>
+    <h2>Feedback Options</h2>
+  <% } else { %>
+    <h2 class="errors-heading">Oops, please correct the following:</h2>
+    <ul class="errors-list">
+      <% Object.values(errors).forEach(error => { %>
+        <li><%= error.msg %></li>
+      <% }) %>
+    </ul>
+  <% } %>
+</div>
+
+<form method="post" action="/feedback" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="form-field <%= errors.message ? 'form-field-invalid' : '' %>">
+    <label for="message">Message</label>
+    <textarea class="input" id="message" name="message" rows="10" autofocus><%= data.message %></textarea>
+    <% if (errors.message) { %>
+      <div class="error"><%= errors.message.msg %></div>
+    <% } %>
+  </div>
+  <div class="form-field <%= errors.name ? 'form-field-invalid' : '' %>">
+    <label for="name">Name</label>
+    <input class="input" id="name" name="name" value="<%= data.name %>" />
+    <% if (errors.name) { %>
+      <div class="error"><%= errors.name.msg %></div>
+    <% } %>
+  </div>
+  <div class="form-actions">
+    <button class="btn" type="submit">Submit</button>
+  </div>
+</form>

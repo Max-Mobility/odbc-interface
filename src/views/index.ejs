@@ -1,5 +1,7 @@
 <% if (messages.success) { %>
   <div class="flash flash-success"><%= messages.success %></div>
+<% } else if (messages.failure) { %>
+  <div class="flash flash-failure"><%= messages.failure %></div>
 <% } %>
 
 <h1>Permobil SmartDrive Syspro Lookup</h1>
@@ -9,4 +11,5 @@
 <a href="/search_by_customer" class="btn link">Search by Customer Info</a>
 <a href="/search_by_serial" class="btn link">Search by Serial Number</a>
 <a href="/search_by_rma" class="btn link">Search by RMA Number</a>
+<a href="/feedback" class="red link btn">Report Issue / Provide Feedback</a>
 </div>
