@@ -8,35 +8,23 @@ function makeID(s) {
     return s;//.replace(/ /gm, '_');
 }
 
-var tableName = null,
-    fieldName = null,
-    value = null;
 var templateContext = function() {
+    const csf = ['Email', 'Sales Order Number', 'Customer Number', 'Customer Name', 'PO Number'];
+    const ssf = ['Serial Number'];
+    const rsf = ['RMA Number'];
     const fields=Object.keys(db.fieldMap).map((f) => { return {
         title: f,
-        selected: f==fieldName,
-        id: makeID(f)
-    }});
-    const tables=Object.keys(db.tableMap).map((f) => { return {
-        title: f,
-        selected: f==tableName,
         id: makeID(f)
     }});
     return {
-        fields: fields,
-        tables: tables,
+        customer_search_fields: fields.filter(f => csf.indexOf(f.title) > -1),
+        serial_search_fields: fields.filter(f => ssf.indexOf(f.title) > -1),
+        rma_search_fields: fields.filter(f => rsf.indexOf(f.title) > -1),
         // actual data
         customer: {},
         orders: [],
         rmas: [],
         devices: [],
-        // end actual data
-        search: {
-            table: tableName,
-            query: value,
-            queries: [
-            ]
-        }
     };
 }
 
@@ -55,7 +43,7 @@ router.get('/check_rma', (req, res) => {
 });
 
 router.post('/check_rma', [
-    check('query')
+    check('rma_number')
         .isLength({ min: 1 })
         .withMessage('RMA is required')
         .trim()
@@ -71,7 +59,6 @@ router.post('/check_rma', [
     }
 
     const data = matchedData(req);
-    value = data.query;
 
     var context = Object.assign(templateContext(), {
         data: req.body,
@@ -79,7 +66,7 @@ router.post('/check_rma', [
         items: [],
         csrfToken: req.csrfToken()
     });
-    db.getRMA(value).then((rma) => {
+    db.getRMA(data.rma_number).then((rma) => {
         console.log('rendering data!');
         context.items = [rma];
         res.render('check_rma', context);
@@ -103,7 +90,7 @@ router.get('/check_order', (req, res) => {
 });
 
 router.post('/check_order', [
-    check('query')
+    check('order_number')
         .isLength({ min: 1 })
         .withMessage('Order is required')
         .trim()
@@ -119,7 +106,6 @@ router.post('/check_order', [
     }
 
     const data = matchedData(req)
-    value = data.query;
 
     var context = Object.assign(templateContext(), {
         data: req.body,
@@ -127,7 +113,7 @@ router.post('/check_order', [
         items: [],
         csrfToken: req.csrfToken()
     });
-    db.getOrder(value).then((order) => {
+    db.getOrder(data.order_number).then((order) => {
         console.log('rendering data!');
         context.items = [order];
         res.render('check_order', context);
@@ -139,6 +125,247 @@ router.post('/check_order', [
         res.render('check_order', context);
     });
 })
+
+
+// search page
+router.get('/search_by_customer', (req, res) => {
+    res.render('search_by_customer', Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    }));
+});
+
+router.post('/search_by_customer', [
+], (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.render('search_by_customer', Object.assign(templateContext(), {
+            data: req.body,
+            errors: errors.mapped(),
+            csrfToken: req.csrfToken()
+        }));
+    }
+
+    const fields = Object.keys(db.fieldMap);
+    const input = Object.keys(req.body).reduce((a, e) => {
+        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
+            a[db.fieldMap[e]] = req.body[e];
+        }
+        return a;
+    }, {});
+
+    var context = Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    });
+
+    var customer = {};
+    var orders = []   // get orders here
+    var rmas = [];    // get rmas here
+    var devices = []; // get serial numbers and such here
+    
+    // look up from SorMaster
+    var lookupOpts = {
+        table: 'SorMaster',
+        queries: []
+    };
+    lookupOpts.queries = db.makeQueries(lookupOpts.table, input);
+    return new Promise((resolve, reject) => {
+        if (lookupOpts.queries.length) {
+            db.lookup(lookupOpts).then((data) => resolve(data)).catch((err) => reject(err));
+        } else {
+            resolve([]);
+        }
+    }).then((data) => {
+        // PULL OUT DATA
+        if (data && data.length) {
+            return db.getCustomer(data[0].Customer);
+        } else {
+            throw ({
+                message: 'Could not find record by : ' + JSON.stringify(lookupOpts.queries, null, 2)
+            });
+        }
+    }).then((c) => {
+        customer = c;
+        orders = db.getOrders(customer.Number);
+        rmas = db.getRMAs(customer.Number);
+        //devices = db.getDevices(customer.Number);
+        return Promise.all([orders, rmas]);
+    }).then((objects) => {
+        orders = objects[0];
+        rmas = objects[1];
+        //devices = objects[2];
+        // now render the data
+        context.customer = customer;
+        context.orders = orders;
+        context.rmas = rmas;
+        context.devices = devices;
+        console.log('rendering data!');
+        res.render('search_by_customer', context);
+    }).catch((err) => {
+        // got an error - render it!
+        console.log('caught error!');
+        context.errors.server = {
+            msg: err.message
+        }
+        res.render('search_by_customer', context);
+    });
+});
+
+// search page
+router.get('/search_by_serial', (req, res) => {
+    res.render('search_by_serial', Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    }));
+});
+
+router.post('/search_by_serial', [
+], (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.render('search_by_serial', Object.assign(templateContext(), {
+            data: req.body,
+            errors: errors.mapped(),
+            csrfToken: req.csrfToken()
+        }));
+    }
+
+    const fields = Object.keys(db.fieldMap);
+    const input = Object.keys(req.body).reduce((a, e) => {
+        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
+            a[db.fieldMap[e]] = req.body[e];
+        }
+        return a;
+    }, {});
+
+    var context = Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    });
+
+    var customer = {};
+    var orders = []   // get orders here
+    var rmas = [];    // get rmas here
+    var devices = []; // get serial numbers and such here
+    
+    return db.getDevice(input.Serial).then((device) => {
+        // PULL OUT DATA
+        devices = [device];
+        if (device && device["Customer Number"]) {
+            return db.getCustomer(device['Customer Number']);
+        } else {
+            throw ({
+                message: 'Could not find by device S/N: ' + input.Serial
+            });
+        }
+    }).then((c) => {
+        customer = c;
+        orders = db.getOrders(customer.Number);
+        rmas = db.getRMAs(customer.Number);
+        return Promise.all([orders, rmas]);
+    }).then((objects) => {
+        orders = objects[0];
+        rmas = objects[1];
+        // now render the data
+        context.customer = customer;
+        context.orders = orders;
+        context.rmas = rmas;
+        context.devices = devices;
+        console.log('rendering data!');
+        res.render('search_by_serial', context);
+    }).catch((err) => {
+        // got an error - render it!
+        console.log('caught error!');
+        context.errors.server = {
+            msg: err.message
+        }
+        res.render('search_by_serial', context);
+    });
+});
+
+// search page
+router.get('/search_by_rma', (req, res) => {
+    res.render('search_by_rma', Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    }));
+});
+
+router.post('/search_by_rma', [
+], (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.render('search_by_rma', Object.assign(templateContext(), {
+            data: req.body,
+            errors: errors.mapped(),
+            csrfToken: req.csrfToken()
+        }));
+    }
+
+    const fields = Object.keys(db.fieldMap);
+    const input = Object.keys(req.body).reduce((a, e) => {
+        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
+            a[db.fieldMap[e]] = req.body[e];
+        }
+        return a;
+    }, {});
+
+    var context = Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    });
+
+    var customer = {};
+    var orders = []   // get orders here
+    var rmas = [];    // get rmas here
+    var devices = []; // get serial numbers and such here
+    
+    return db.getRMA(input.RmaNumber).then((rma) => {
+        // PULL OUT DATA
+        rmas = [rma];
+        if (rma && rma["Customer Number"]) {
+            return db.getCustomer(rma['Customer Number']);
+        } else {
+            throw ({
+                message: 'Could not find by rma number: ' + input.RmaNumber
+            });
+        }
+    }).then((c) => {
+        customer = c;
+        orders = db.getOrders(customer.Number);
+        //rmas = db.getRMAs(customer.Number);
+        //devices = db.getDevices(customer.Number);
+        return Promise.all([orders]);
+    }).then((objects) => {
+        orders = objects[0];
+        //rmas = objects[1];
+        //devices = objects[2];
+        // now render the data
+        context.customer = customer;
+        context.orders = orders;
+        context.rmas = rmas;
+        context.devices = devices;
+        console.log('rendering data!');
+        res.render('search_by_rma', context);
+    }).catch((err) => {
+        // got an error - render it!
+        console.log('caught error!');
+        context.errors.server = {
+            msg: err.message
+        }
+        res.render('search_by_rma', context);
+    });
+});
+
+
+// NOW UNUSED PAST HERE:
 
 // search page
 router.get('/search', (req, res) => {

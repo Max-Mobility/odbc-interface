@@ -17,7 +17,7 @@
 
 <form method="post" action="/search_by_customer" novalidate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <% for (var field in fields) { let f = fields[field]; %>
+  <% for (var field in customer_search_fields) { let f = customer_search_fields[field]; %>
   <div class="form-field <%= errors[f.title] ? 'form-field-invalid' : '' %>">
     <label><%= f.title %></label>
     <input class="input" id="<%= f.id %>" name="<%= f.id %>" value="<%= data[f.title] %>" />

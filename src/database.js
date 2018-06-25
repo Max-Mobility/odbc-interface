@@ -41,6 +41,7 @@ const tableMap = {
 
 function padNumber(str, len=15, c='0') {
     //     '000000000001363'
+    if (typeof str !== 'string') str = '' + str;
     var s= '', c= c || '0', len= (len || 2)-str.length;
     while(s.length<len) s+= c;
     return s+str;
@@ -223,6 +224,24 @@ function getCustomer(customer_number) {
     });
 };
 
+function getRMAs(customer_number) {
+    var lookupOpts = {
+        table: 'RmaMaster',
+        queries: [
+            {
+                "Customer": customer_number
+            }
+        ]
+    };
+    return lookup(lookupOpts).then(data => {
+        var tasks = data.map((d) => {
+            console.log(`Looking up RMA: ${d.RmaNumber}`);
+            return getRMA(d.RmaNumber);
+        });
+        return Promise.all(tasks);
+    });
+}
+
 function getRMA(rma_number) {
     // Loop through our tables
     var tasks = types.RMA.tables.map((t) => {
@@ -248,6 +267,24 @@ function getRMA(rma_number) {
     });
 };
 
+function getDevices(customer_number) {
+    var lookupOpts = {
+        table: 'InvSerialHead',
+        queries: [
+            {
+                "Customer": customer_number
+            }
+        ]
+    };
+    return lookup(lookupOpts).then(data => {
+        var tasks = data.map((d) => {
+            console.log(`Looking up device: ${d.Serial}`);
+            return getDevice(d.Serial);
+        });
+        return Promise.all(tasks);
+    });
+}
+
 function getDevice(serial_number) {
     // Loop through our tables
     var tasks = types.Device.tables.map((t) => {
@@ -272,6 +309,24 @@ function getDevice(serial_number) {
         console.log(`cannot get device: ${err}`);
     });
 };
+
+function getOrders(customer_number) {
+    var lookupOpts = {
+        table: 'SorMaster',
+        queries: [
+            {
+                "Customer": customer_number
+            }
+        ]
+    };
+    return lookup(lookupOpts).then(data => {
+        var tasks = data.map((d) => {
+            console.log(`Looking up order: ${d.SalesOrder}`);
+            return getOrder(d.SalesOrder);
+        });
+        return Promise.all(tasks);
+    });
+}
 
 function getOrder(order_number) {
     // Loop through our tables
@@ -625,6 +680,10 @@ module.exports = {
     getRMA,
     getDevice,
     getOrder,
+    getRMAs,
+    getDevices,
+    getOrders,
+    // basic
     checkRMA,
     checkOrder,
     lookup,

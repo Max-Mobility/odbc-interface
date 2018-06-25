@@ -1,4 +1,4 @@
-<!-- views/search_by_customer.ejs -->
+<!-- views/search_by_rma.ejs -->
 <div class="form-header">
 <a href="/" class="red link btn">Back to Main Page</a>
 </div>
@@ -15,9 +15,9 @@
   <% } %>
 </div>
 
-<form method="post" action="/search_by_customer" novalidate>
+<form method="post" action="/search_by_rma" novalidate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <% for (var field in fields) { let f = fields[field]; %>
+  <% for (var field in rma_search_fields) { let f = rma_search_fields[field]; %>
   <div class="form-field <%= errors[f.title] ? 'form-field-invalid' : '' %>">
     <label><%= f.title %></label>
     <input class="input" id="<%= f.id %>" name="<%= f.id %>" value="<%= data[f.title] %>" />

@@ -17,27 +17,11 @@
 
 <form method="post" action="/check_rma" novalidate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <!--
-  <div class="form-field <%= errors.message ? 'form-field-invalid' : '' %>">
-    <label for="message">Message</label>
-    <textarea class="input" id="message" name="message" rows="4" autofocus><%= data.message %></textarea>
-    <% if (errors.message) { %>
-      <div class="error"><%= errors.message.msg %></div>
-    <% } %>
-  </div>
-  <div class="form-field <%= errors.email ? 'form-field-invalid' : '' %>">
-    <label for="email">Email</label>
-    <input class="input" id="email" name="email" type="email" value="<%= data.email %>" />
-    <% if (errors.email) { %>
-      <div class="error"><%= errors.email.msg %></div>
-    <% } %>
-  </div>
-  -->
-  <div class="form-field <%= errors.query ? 'form-field-invalid' : '' %>">
-    <label for="query">RMA Number</label>
-    <input class="input" id="query" name="query" value="<%= search.query %>" />
-    <% if (errors.query) { %>
-      <div class="error"><%= errors.query.msg %></div>
+  <div class="form-field <%= errors.rma_number ? 'form-field-invalid' : '' %>">
+    <label for="rma_number">RMA Number</label>
+    <input class="input" id="rma_number" name="rma_number" value="<%= data.rma_number %>" />
+    <% if (errors.rma_number) { %>
+      <div class="error"><%= errors.rma_number.msg %></div>
     <% } %>
   </div>
   <div class="form-actions">
@@ -47,21 +31,27 @@
 
 <div class="results" style="width: 50%">
 
-<% if (search.query) { %>
+<% if (data.rma_number) { %>
 <div class="rmas col" style="width: 100%">
-<h4>Search result for RMA <font color="blue"><%= search.query %></font>:</h4>
+<h4>Search result for RMA <font color="blue"><%= data.rma_number %></font>:</h4>
 <% if (items) { items.map((i) => { %>
-<details open><summary>RMA: <%= i["RmaNumber"] %></summary>
+<% if (i["RMA Number"] !== null && i["RMA Number"] !== undefined) { %>
+<details open><summary>RMA: <%= i["RMA Number"] %></summary>
 <div class="property-list">
 <% Object.keys(i).sort().map((k) => { %>
 <hr/>
+<% if (i[k] !== null && i[k] !== undefined) { %>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>
 <div class="property-value"><pre><%= i[k] %></pre></div>
 </div>
+<% } %>
 <% }) %>
 </div>
 </details>
+<% } else { %>
+<h4>Couldn't find RMA <font color="red"><%= data.rma_number %></font></h4>
+<% } %>
 <% })} %>
 </div>
 <% } %>
