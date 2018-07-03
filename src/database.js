@@ -672,7 +672,7 @@ function lookup(opts) {
                     v = e[1];
                 //console.log(e);
                 if (v && v.length) {
-                    query += ` ${k}='${v}' AND`;
+                    query += ` LOWER(${k}) LIKE LOWER('%${v}%') AND`;
                 }
             });
         });
