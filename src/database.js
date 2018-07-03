@@ -434,6 +434,26 @@ function getOrderByMarkFor(markfor) {
     });
 };
 
+function getDeviceByInvoice(invoice) {
+    var lookupOpts = {
+        table: 'InvSerialTrn',
+        queries: [
+            {
+                "Invoice": invoice
+            }
+        ]
+    };
+    return lookup(lookupOpts).then(data => {
+        var nums = data.map(d => d.Serial);
+        nums = _.uniq(nums);
+        var tasks = nums.map((num) => {
+            console.log(`Looking up serial: ${num}`);
+            return getDevice(num);
+        });
+        return Promise.all(tasks);
+    });
+};
+
 const tables = {
     "SorMaster": {
         "fields": [
@@ -771,6 +791,7 @@ module.exports = {
     getOrder,
     getRMAs,
     getDevices,
+    getDeviceByInvoice,
     getOrders,
     getOrderByMarkFor,
     // basic

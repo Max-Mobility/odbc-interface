@@ -470,7 +470,7 @@ router.post('/search_by_markfor', [
 
     db.getOrderByMarkFor(markfor).then((_orders) => {
         orders = _orders;
-        return [];
+        return db.getDeviceByInvoice(orders[0]['Invoice Number']);
     }).then((_devices) => {
         devices = _devices;
         console.log('rendering data!');
