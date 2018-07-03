@@ -326,7 +326,7 @@ router.post('/search_by_serial', [
         }
     }).then((c) => {
         customer = c;
-        orders = db.getOrders(customer.Number);
+        orders = db.getOrder(devices[0]['Sales Order Number']);
         rmas = db.getRMAs(customer.Number);
         return Promise.all([orders, rmas]);
     }).then((objects) => {
@@ -334,7 +334,7 @@ router.post('/search_by_serial', [
         rmas = objects[1];
         // now render the data
         context.customer = customer;
-        context.orders = orders;
+        context.orders = [orders];
         context.rmas = rmas;
         context.devices = devices;
         console.log('rendering data!');
