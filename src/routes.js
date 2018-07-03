@@ -6,6 +6,7 @@ const { matchedData } = require('express-validator/filter')
 
 const nodemailer = require('nodemailer');
 
+const _ = require('underscore');
 
 var transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -470,7 +471,12 @@ router.post('/search_by_markfor', [
 
     db.getOrderByMarkFor(markfor).then((_orders) => {
         orders = _orders;
-        return db.getDeviceByInvoice(orders[0]['Invoice Number']);
+        var invoices = orders.map(o => o['Invoice Number']);
+        invoices = _.uniq(invoices);
+        var tasks = invoices.map(i => db.getDeviceByInvoice(i));
+        return Promise.all(tasks).then((it) => {
+            return _.flatten(it);
+        });
     }).then((_devices) => {
         devices = _devices;
         console.log('rendering data!');
