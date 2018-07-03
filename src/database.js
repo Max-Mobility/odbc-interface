@@ -565,12 +565,16 @@ var odbc = require('odbc')
 , conn_str = "DSN=MySQLServerDatabase;"
 , cn = conn_str + process.env.ODBC_CONNECTION_STRING
 ;
-var db = new odbc.Database();
-db.open(cn, function (err) {
-    if (err) return console.log(err);
+var db = null;
+const open = () => {
+    db = new odbc.Database();
+    db.open(cn, function (err) {
+        if (err) return console.log(err);
 
-    console.log(`Connected: ${db.connected}`);
-});
+        console.log(`Connected: ${db.connected}`);
+    });
+};
+open();
 
 function lookup(opts) {
     return new Promise((resolve, reject) => {
@@ -596,6 +600,10 @@ function lookup(opts) {
 
         db.query(query, (err, data) => {
             if (err) {
+                if (err.includes('Communication link failure')) {
+                    // try to re-open the connection
+                    open();
+                }
                 reject(err);
             } else {
                 resolve(data);
