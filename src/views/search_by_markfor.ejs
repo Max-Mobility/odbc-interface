@@ -1,0 +1,99 @@
+<!-- views/search_by_markfor.ejs -->
+<div class="form-header">
+<a href="/" class="red link btn">Back to Main Page</a>
+<a href="/feedback" class="red link btn">Report Issue / Provide Feedback</a>
+</div>
+<div class="form-header">
+  <% if (Object.keys(errors).length === 0) { %>
+    <h2>Enter Search Options</h2>
+  <% } else { %>
+    <h2 class="errors-heading">Oops, please correct the following:</h2>
+    <ul class="errors-list">
+      <% Object.values(errors).forEach(error => { %>
+        <li><%= error.msg %></li>
+      <% }) %>
+    </ul>
+  <% } %>
+</div>
+
+<form method="post" action="/search_by_markfor" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <% for (var field in markfor_search_fields) { let f = markfor_search_fields[field]; %>
+  <div class="form-field <%= errors[f.title] ? 'form-field-invalid' : '' %>">
+    <label><%= f.title %></label>
+    <input class="input" id="<%= f.id %>" name="<%= f.id %>" value="<%= data[f.title] %>" />
+    <% if (errors[f.title]) { %>
+      <div class="error"><%= errors[f.title].msg %></div>
+    <% } %>
+  </div>
+  <% } %>
+  <div class="form-actions">
+    <button class="btn" type="submit">Search</button>
+  </div>
+</form>
+
+<div class="results">
+
+<% if (customer && customer.Number) { %>
+<div class="customer-info">
+<h3>Customer <font color="blue"><%= customer.Name %></font></h3>
+</div>
+<% } else { %>
+<% } %>
+
+<div class="orders col">
+<h4>Orders</h4>
+<% if (orders) { orders.map((i) => { %>
+<details><summary>Order: <%= i["Order Number"] %></summary>
+<div class="property-list">
+<% Object.keys(i).map((k) => { %>
+<hr/>
+<div class="property">
+<div class="property-label"><b><%= k %></b>: </div>
+<% if (k === 'Tracking Number') { %>
+<div class="property-value"><pre><a href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= i[k] %>"><%= i[k] %></a></pre></div>
+<% } else { %>
+<div class="property-value"><pre><%= i[k] %></pre></div>
+<% } %>
+</div>
+<% }) %>
+</div>
+</details>
+<% })} %>
+</div>
+
+<div class="rmas col">
+<h4>RMAs</h4>
+<% if (rmas) { rmas.map((i) => { %>
+<details><summary>RMA: <%= i["RMA Number"] %></summary>
+<div class="property-list">
+<% Object.keys(i).map((k) => { %>
+<hr/>
+<div class="property">
+<div class="property-label"><b><%= k %></b>: </div>
+<div class="property-value"><pre><%= i[k] %></pre></div>
+</div>
+<% }) %>
+</div>
+</details>
+<% })} %>
+</div>
+
+<div class="devices col">
+<h4>Devices</h4>
+<% if (devices) { devices.map((i) => { %>
+<details><summary>Device: <%= i["Serial Number"] %></summary>
+<div class="property-list">
+<% Object.keys(i).map((k) => { %>
+<hr/>
+<div class="property">
+<div class="property-label"><b><%= k %></b>: </div>
+<div class="property-value"><pre><%= i[k] %></pre></div>
+</div>
+<% }) %>
+</div>
+</details>
+<% })} %>
+</div>
+
+</div>

@@ -1,4 +1,4 @@
-
+const _ = require('underscore');
 const fieldToEntry = {
     "Serial Number": "Inventory (Master)",
     "Email": "Customers",
@@ -16,7 +16,8 @@ const fieldMap = {
     "Customer Number": "Customer",
     "Customer Name": "CustomerName",
     "PO Number": "CustomerPoNumber",
-    "RMA Number": "RmaNumber"
+    "RMA Number": "RmaNumber",
+    "Mark For": "MarkFor"
 };
 
 const searchFields = {
@@ -140,6 +141,7 @@ const types = {
             "SorMaster",
             "SorDetail",
             "ArInvoice",
+            "CusSorMaster+",
         ],
         customerUpdate: function (input, customer) {
         },
@@ -156,6 +158,11 @@ const types = {
             'Invoice Number': "Invoice",
             'Actual Ship Date': 'InvoiceDate',
             'Tracking Number': 'Tracking',
+            'Mark For': 'MarkFor',
+            'Chair Make': 'ChairMake',
+            'Chair Model': 'ChairModel',
+            'Chair Width': 'ChairWidth',
+            'Rear Wheel Size': 'RearWheelSize',
             'Cash or Credit': "CashCredit",
             'Last Invoice': "LastInvoice",
             'Last Operator': "LastOperator",
@@ -404,6 +411,26 @@ function getOrder(order_number) {
         return types.Order.create(obj);
     }).catch((err) => {
         console.log(`cannot get order: ${err}`);
+    });
+};
+
+function getOrderByMarkFor(markfor) {
+    var lookupOpts = {
+        table: 'CusSorMaster+',
+        queries: [
+            {
+                "MarkFor": markfor
+            }
+        ]
+    };
+    return lookup(lookupOpts).then(data => {
+        var orderNumbers = data.map(d => d.SalesOrder);
+        orderNumbers = _.uniq(orderNumbers);
+        var tasks = orderNumbers.map((order) => {
+            console.log(`Looking up order: ${order}`);
+            return getOrder(order);
+        });
+        return Promise.all(tasks);
     });
 };
 
@@ -745,6 +772,7 @@ module.exports = {
     getRMAs,
     getDevices,
     getOrders,
+    getOrderByMarkFor,
     // basic
     checkRMA,
     checkOrder,

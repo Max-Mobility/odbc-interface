@@ -23,6 +23,7 @@ var templateContext = function() {
     const csf = ['Email', 'Sales Order Number', 'Customer Number', 'Customer Name', 'PO Number'];
     const ssf = ['Serial Number'];
     const rsf = ['RMA Number'];
+    const mfsf = ['Mark For'];
     const fields=Object.keys(db.fieldMap).map((f) => { return {
         title: f,
         id: makeID(f)
@@ -31,6 +32,7 @@ var templateContext = function() {
         customer_search_fields: fields.filter(f => csf.indexOf(f.title) > -1),
         serial_search_fields: fields.filter(f => ssf.indexOf(f.title) > -1),
         rma_search_fields: fields.filter(f => rsf.indexOf(f.title) > -1),
+        markfor_search_fields: fields.filter(f => mfsf.indexOf(f.title) > -1),
         // actual data
         customer: {},
         orders: [],
@@ -425,6 +427,65 @@ router.post('/search_by_rma', [
     });
 });
 
+// search page
+router.get('/search_by_markfor', (req, res) => {
+    res.render('search_by_markfor', Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    }));
+});
+
+router.post('/search_by_markfor', [
+], (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.render('search_by_markfor', Object.assign(templateContext(), {
+            data: req.body,
+            errors: errors.mapped(),
+            csrfToken: req.csrfToken()
+        }));
+    }
+
+    const fields = Object.keys(db.fieldMap);
+    const input = Object.keys(req.body).reduce((a, e) => {
+        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
+            a[db.fieldMap[e]] = req.body[e];
+        }
+        return a;
+    }, {});
+
+    const markfor = input.MarkFor;
+
+    var context = Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    });
+
+    var customer = {};
+    var orders = []   // get orders here
+    var rmas = [];    // get rmas here
+    var devices = []; // get serial numbers and such here
+
+    db.getOrderByMarkFor(markfor).then((_orders) => {
+        orders = _orders;
+        return [];
+    }).then((_devices) => {
+        devices = _devices;
+        console.log('rendering data!');
+        context.orders = orders;
+        context.rmas = rmas;
+        context.devices = devices;
+        res.render('search_by_markfor', context);
+    }).catch((err) => {
+        console.log('caught error!');
+        context.errors.server = {
+            msg: err.message
+        }
+        res.render('search_by_markfor', context);
+    });
+});
 
 // NOW UNUSED PAST HERE:
 
