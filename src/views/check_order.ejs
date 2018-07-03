@@ -44,7 +44,11 @@
 <% if (i[k] !== null && i[k] !== undefined) { %>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>
+<% if (k === 'Tracking Number') { %>
+<div class="property-value"><pre><a href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= i[k] %>"><%= i[k] %></a></pre></div>
+<% } else { %>
 <div class="property-value"><pre><%= i[k] %></pre></div>
+<% } %>
 </div>
 <% } %>
 <% }) %>

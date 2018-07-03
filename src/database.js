@@ -138,7 +138,8 @@ const types = {
         field: "SalesOrder",
         tables: [
             "SorMaster",
-            "SorDetail"
+            "SorDetail",
+            "ArInvoice",
         ],
         customerUpdate: function (input, customer) {
         },
@@ -152,6 +153,9 @@ const types = {
             'Order Date': "OrderDate",
             'Requested Ship Date': "ReqShipDate",
             'Shipping Instructions': "ShippingInstrs",
+            'Invoice Number': "Invoice",
+            'Actual Ship Date': 'InvoiceDate',
+            'Tracking Number': 'Tracking',
             'Cash or Credit': "CashCredit",
             'Last Invoice': "LastInvoice",
             'Last Operator': "LastOperator",
