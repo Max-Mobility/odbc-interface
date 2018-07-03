@@ -472,7 +472,7 @@ router.post('/search_by_markfor', [
     db.getOrderByMarkFor(markfor).then((_orders) => {
         orders = _orders;
         var invoices = orders.map(o => o['Invoice Number']);
-        invoices = _.uniq(invoices);
+        invoices = _.uniq(invoices).filter(i => (i > 0) || (i && i.length));
         var tasks = invoices.map(i => db.getDeviceByInvoice(i));
         return Promise.all(tasks).then((it) => {
             return _.flatten(it);

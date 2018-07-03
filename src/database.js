@@ -425,7 +425,7 @@ function getOrderByMarkFor(markfor) {
     };
     return lookup(lookupOpts).then(data => {
         var orderNumbers = data.map(d => d.SalesOrder);
-        orderNumbers = _.uniq(orderNumbers);
+        orderNumbers = _.uniq(orderNumbers).filter(i => (i > 0 || (i && i.length)));
         var tasks = orderNumbers.map((order) => {
             console.log(`Looking up order: ${order}`);
             return getOrder(order);
@@ -445,7 +445,7 @@ function getDeviceByInvoice(invoice) {
     };
     return lookup(lookupOpts).then(data => {
         var nums = data.map(d => d.Serial);
-        nums = _.uniq(nums);
+        nums = _.uniq(nums).filter(i => (i > 0 || (i && i.length)));
         var tasks = nums.map((num) => {
             console.log(`Looking up serial: ${num}`);
             return getDevice(num);
@@ -701,7 +701,7 @@ function lookup(opts) {
 
         db.query(query, (err, data) => {
             if (err) {
-                if (err.includes('Communication link failure')) {
+                if (err.message && err.message.includes('Communication link failure')) {
                     // try to re-open the connection
                     open();
                 }
