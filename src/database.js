@@ -85,6 +85,34 @@ function combineShipping(input) {
     ].join('\n');
 }
 
+const mergeObjects = (output, a, b) => {
+    Object.keys(a).map((k) => {
+        var v = a[k];
+        var o = output[k];
+        if (v && v.length && o && o.length && o.length > v.length) {
+            // do nothing
+        } else if (o && v && o > v) {
+            // do nothing
+        } else {
+            output[k] = v;
+        }
+    });
+    if (b) {
+        Object.keys(b).map((k) => {
+            var v = b[k];
+            var o = output[k];
+            if (v && v.length && o && o.length && o.length > v.length) {
+                // do nothing
+            } else if (o && v && o > v) {
+                // do nothing
+            } else {
+                output[k] = v;
+            }
+        });
+    }
+    return output;
+};
+
 const types = {
     "Customer": {
         field: "Customer",
@@ -180,13 +208,15 @@ const types = {
         tables: [
             "InvSerialHead",
             "InvSerialHead+",
-            "InvSerialTrn"
+            "InvSerialTrn",
         ],
         inputMap: {
             'Customer Number': "Customer",
-            'Stock Code': 'StockCode',
             'Serial Number': 'Serial',
+            'Sales Order Number': 'SalesOrder',
+            'Invoice Number': 'Invoice',
             'Description': 'SerialDescription',
+            'Stock Code': 'StockCode',
             'Service Flag': 'ServiceFlag',
         },
         create: function(input, output, customer) {
@@ -214,8 +244,13 @@ function getCustomer(customer_number) {
     });
     return Promise.all(tasks).then((dataArray) => {
         return dataArray.reduce((a, e) => {
-            var o = ( e && e.length ) ? e[0] : {};
-            return Object.assign({}, a, o);
+            var output = a;
+            if (e.length) {
+                e.map((o) => {
+                    output = mergeObjects(output, o);
+                });
+            }
+            return output;
         }, {});
     }).then((obj) => {
         return types.Customer.create(obj);
@@ -257,8 +292,13 @@ function getRMA(rma_number) {
     });
     return Promise.all(tasks).then((dataArray) => {
         return dataArray.reduce((a, e) => {
-            var o = ( e && e.length ) ? e[0] : {};
-            return Object.assign({}, a, o);
+            var output = a;
+            if (e.length) {
+                e.map((o) => {
+                    output = mergeObjects(output, o);
+                });
+            }
+            return output;
         }, {});
     }).then((obj) => {
         return types.RMA.create(obj);
@@ -300,8 +340,13 @@ function getDevice(serial_number) {
     });
     return Promise.all(tasks).then((dataArray) => {
         return dataArray.reduce((a, e) => {
-            var o = ( e && e.length ) ? e[0] : {};
-            return Object.assign({}, a, o);
+            var output = a;
+            if (e.length) {
+                e.map((o) => {
+                    output = mergeObjects(output, o);
+                });
+            }
+            return output;
         }, {});
     }).then((obj) => {
         return types.Device.create(obj);
@@ -343,8 +388,13 @@ function getOrder(order_number) {
     })
     return Promise.all(tasks).then((dataArray) => {
         return dataArray.reduce((a, e) => {
-            var o = ( e && e.length ) ? e[0] : {};
-            return Object.assign({}, a, o);
+            var output = a;
+            if (e.length) {
+                e.map((o) => {
+                    output = mergeObjects(output, o);
+                });
+            }
+            return output;
         }, {});
     }).then((obj) => {
         return types.Order.create(obj);
