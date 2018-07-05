@@ -86,6 +86,12 @@ function combineShipping(input) {
     ].join('\n');
 }
 
+const exists = (_i) => {
+    let i = _i.trim();
+    console.log(`'${i}'`);
+    return (i > 0) || (i && i.length);
+};
+
 const mergeObjects = (output, a, b) => {
     Object.keys(a).map((k) => {
         var v = a[k];
@@ -425,7 +431,7 @@ function getOrderByMarkFor(markfor) {
     };
     return lookup(lookupOpts).then(data => {
         var orderNumbers = data.map(d => d.SalesOrder);
-        orderNumbers = _.uniq(orderNumbers).filter(i => (i > 0 || (i && i.length)));
+        orderNumbers = _.uniq(orderNumbers).filter(i => exists(i));
         var tasks = orderNumbers.map((order) => {
             console.log(`Looking up order: ${order}`);
             return getOrder(order);
@@ -445,7 +451,7 @@ function getDeviceByInvoice(invoice) {
     };
     return lookup(lookupOpts).then(data => {
         var nums = data.map(d => d.Serial);
-        nums = _.uniq(nums).filter(i => (i > 0 || (i && i.length)));
+        nums = _.uniq(nums).filter(i => exists(i));
         var tasks = nums.map((num) => {
             console.log(`Looking up serial: ${num}`);
             return getDevice(num);
@@ -784,6 +790,7 @@ function checkOrder(order) {
 }
 
 module.exports = {
+    exists,
     // functions for objects
     getCustomer,
     getRMA,

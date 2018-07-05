@@ -329,15 +329,18 @@ router.post('/search_by_serial', [
         }
     }).then((c) => {
         customer = c;
-        orders = db.getOrder(devices[0]['Sales Order Number']);
+        var orderNumbers = devices.map(d => d['Sales Order Number']);
+        orderNumbers = _.uniq(orderNumbers).filter(i => db.exists(i));
+        console.log(orderNumbers);
+        orders = orderNumbers.map(o => db.getOrder(o));
         rmas = db.getRMAs(customer.Number);
         return Promise.all([orders, rmas]);
     }).then((objects) => {
-        orders = objects[0];
-        rmas = objects[1];
+        orders = _.flatten(objects[0]);
+        rmas = _.flatten(objects[1]);
         // now render the data
         context.customer = customer;
-        context.orders = [orders];
+        context.orders = orders;
         context.rmas = rmas;
         context.devices = devices;
         console.log('rendering data!');
@@ -405,17 +408,20 @@ router.post('/search_by_rma', [
         customer = c;
         orders = db.getOrders(customer.Number);
         //rmas = db.getRMAs(customer.Number);
-        //devices = db.getDevices(customer.Number);
-        return Promise.all([orders]);
+        if (db.exists(rmas[0]['Serial Number'])) {
+            devices = db.getDevice(rmas[0]['Serial Number']);
+        } else {
+            devices = [];
+        }
+        return Promise.all([orders, devices]);
     }).then((objects) => {
         orders = objects[0];
-        //rmas = objects[1];
-        //devices = objects[2];
+        devices = objects[1];
         // now render the data
         context.customer = customer;
         context.orders = orders;
         context.rmas = rmas;
-        context.devices = devices;
+        context.devices = [devices];
         console.log('rendering data!');
         res.render('search_by_rma', context);
     }).catch((err) => {
@@ -472,7 +478,7 @@ router.post('/search_by_markfor', [
     db.getOrderByMarkFor(markfor).then((_orders) => {
         orders = _orders;
         var invoices = orders.map(o => o['Invoice Number']);
-        invoices = _.uniq(invoices).filter(i => (i > 0) || (i && i.length));
+        invoices = _.uniq(invoices).filter(i => db.exists(i));
         var tasks = invoices.map(i => db.getDeviceByInvoice(i));
         return Promise.all(tasks).then((it) => {
             return _.flatten(it);
