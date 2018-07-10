@@ -331,7 +331,6 @@ router.post('/search_by_serial', [
         customer = c;
         var orderNumbers = devices.map(d => d['Sales Order Number']);
         orderNumbers = _.uniq(orderNumbers).filter(i => db.exists(i));
-        console.log(orderNumbers);
         orders = orderNumbers.map(o => db.getOrder(o));
         rmas = db.getRMAs(customer.Number);
         return Promise.all([orders, rmas]);

@@ -88,7 +88,6 @@ function combineShipping(input) {
 
 const exists = (_i) => {
     let i = _i.trim();
-    console.log(`'${i}'`);
     return (i > 0) || (i && i.length);
 };
 
@@ -597,14 +596,14 @@ const tables = {
         "fields": [
         ],
         "makeObject": function(input, output, customer) {
-            console.log(intput);
+            console.log(input);
         }
     },
     "RmaDetail": {
         "fields": [
         ],
         "makeObject": function(input, output, customer) {
-            console.log(intput);
+            console.log(input);
         }
     },
     "InvMaster": {
