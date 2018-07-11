@@ -88,7 +88,7 @@ router.get('/', (req, res) => {
     db.lookup(lu).then((data) => {
         var today = new Date();
         var oldest = new Date(data[0].OrderDate);
-        var shipDays = ((new Date()).setTime(today - oldest) / 86400000).toFixed(0);
+        var shipDays = moment(today).diff(moment(oldest), 'days');
         var businessDays = business.weekDays(moment(oldest), moment(today));
         console.log(businessDays);
         var shipColor = 'green';
