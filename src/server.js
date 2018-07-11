@@ -39,7 +39,10 @@ app.use(middlewares)
 app.use('/', routes)
 
 app.use((req, res, next) => {
-    res.status(404).send("Sorry can't find that!")
+    //res.status(404).send("Sorry can't find that!")
+
+    // handle when they ask for something we don't have - redirect them back to the main page
+    res.redirect('/');
 })
 
 app.use((err, req, res, next) => {
