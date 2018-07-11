@@ -63,6 +63,12 @@ router.get('/', (req, res) => {
                 pattern: '%RMA:%',
                 invert: true
             },
+            {
+                operator: 'LIKE',
+                column: 'Salesperson',
+                pattern: '%999%',
+                invert: true
+            },
             /*
             {
                 operator: 'IS',
@@ -72,19 +78,23 @@ router.get('/', (req, res) => {
             */
         ],
         orderBy: {
-            columns: ['ReqShipDate'],
+            columns: ['OrderDate'],
             direction: 'ASC'
         }
     };
     db.lookup(lu).then((data) => {
         var today = new Date();
-        var oldest = new Date(data[0].ReqShipDate);
+        var oldest = new Date(data[0].OrderDate);
         var shipDays = ((new Date()).setTime(today - oldest) / 86400000).toFixed(0);
+        var shipColor = 'green';
+        if (shipDays > 5) shipColor = 'orange';
+        if (shipDays > 7) shipColor = 'red';
         res.render('index', {
             data: req.body,
             errors: {},
             orders: data,
-            shipDays: shipDays
+            shipDays: shipDays,
+            shipColor: shipColor
         });
     }).catch((err) => {
         console.log(`error: ${err}`);
@@ -96,7 +106,8 @@ router.get('/', (req, res) => {
                 }
             },
             orders: [],
-            shipDays: 'UNKNOWN'
+            shipDays: 'UNKNOWN',
+            shipColor: 'red'
         });
     });
 });
