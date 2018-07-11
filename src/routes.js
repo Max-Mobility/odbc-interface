@@ -6,6 +6,9 @@ const { matchedData } = require('express-validator/filter')
 
 const nodemailer = require('nodemailer');
 
+const moment = require('moment');
+const business = require('moment-business');
+
 const _ = require('underscore');
 
 var transporter = nodemailer.createTransport({
@@ -86,6 +89,8 @@ router.get('/', (req, res) => {
         var today = new Date();
         var oldest = new Date(data[0].OrderDate);
         var shipDays = ((new Date()).setTime(today - oldest) / 86400000).toFixed(0);
+        var businessDays = business.weekDays(moment(oldest), moment(today));
+        console.log(businessDays);
         var shipColor = 'green';
         if (shipDays > 5) shipColor = 'orange';
         if (shipDays > 7) shipColor = 'red';
@@ -94,6 +99,7 @@ router.get('/', (req, res) => {
             errors: {},
             orders: data,
             shipDays: shipDays,
+            businessDays: businessDays,
             shipColor: shipColor
         });
     }).catch((err) => {
@@ -107,6 +113,7 @@ router.get('/', (req, res) => {
             },
             orders: [],
             shipDays: 'UNKNOWN',
+            businessDays: 'UNKNOWN',
             shipColor: 'red'
         });
     });
