@@ -52,14 +52,52 @@ router.get('/', (req, res) => {
         table: 'SorMaster',
         top: 10,
         queries: [
-        ]
+            {
+                operator: 'LIKE',
+                column: 'OrderStatus',
+                pattern: '1'
+            },
+            {
+                operator: 'LIKE',
+                column: 'CustomerPoNumber',
+                pattern: '%RMA:%',
+                invert: true
+            },
+            /*
+            {
+                operator: 'IS',
+                column: 'Invoice',
+                pattern: 'NULL'
+            },
+            */
+        ],
+        orderBy: {
+            columns: ['ReqShipDate'],
+            direction: 'ASC'
+        }
     };
-
-    res.render('index', {
-        data: req.body,
-        errors: {},
-        orders: [],
-        shipDays: 7
+    db.lookup(lu).then((data) => {
+        var today = new Date();
+        var oldest = new Date(data[0].ReqShipDate);
+        var shipDays = ((new Date()).setTime(today - oldest) / 86400000).toFixed(0);
+        res.render('index', {
+            data: req.body,
+            errors: {},
+            orders: data,
+            shipDays: shipDays
+        });
+    }).catch((err) => {
+        console.log(`error: ${err}`);
+        res.render('index', {
+            data: req.body,
+            errors: {
+                server: {
+                    msg: err.message
+                }
+            },
+            orders: [],
+            shipDays: 'UNKNOWN'
+        });
     });
 });
 

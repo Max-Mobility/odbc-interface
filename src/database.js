@@ -713,7 +713,7 @@ function lookup(opts) {
 
         var query = '';
         if (opts.top > 0) {
-            query = `select TOP ${opts.top} from [${table}]`;
+            query = `select TOP ${opts.top} * from [${table}]`;
         } else {
             query = `select * from [${table}]`;
         }
@@ -722,14 +722,22 @@ function lookup(opts) {
         }
         opts.queries.map(q => {
             if (q.pattern && q.pattern.length) {
-                var col = `LOWER(${q.column})`;
-                var pattern = `LOWER('${q.pattern}')`;
                 var operator = `${q.operator}`;
+                var col = `${q.column}`;
+                var pattern = `${q.pattern}`;
+                if (operator == 'LIKE') {
+                    col = `LOWER(${q.column})`;
+                    pattern = `LOWER('${q.pattern}')`;
+                }
                 var invert = q.invert ? `NOT` : '';
                 query += ` ${invert} ${col} ${operator} ${pattern} AND`;
             }
         });
-        query = query.replace(/AND$/, ';');
+        query = query.replace(/AND$/, '');
+        if (opts.orderBy !== undefined) {
+            query += ` ORDER BY ${opts.orderBy.columns.join(',')} ${opts.orderBy.direction}`;
+        }
+        query += ';';
         console.log(query);
 
         db.query(query, (err, data) => {

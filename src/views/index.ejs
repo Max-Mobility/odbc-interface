@@ -6,6 +6,19 @@
 
 <h1>Permobil SmartDrive Syspro Lookup</h1>
 <h2>We're shipping in <font color="blue"><%= shipDays %> days</font>!</h2>
+
+<div class="form-header">
+  <% if (Object.keys(errors).length === 0) { %>
+  <% } else { %>
+    <h2 class="errors-heading">Oops, please correct the following:</h2>
+    <ul class="errors-list">
+      <% Object.values(errors).forEach(error => { %>
+        <li><%= error.msg %></li>
+      <% }) %>
+    </ul>
+  <% } %>
+</div>
+
 <div class="form">
 <a href="/check_rma" class="btn link">Check RMA Status</a>
 <a href="/check_order" class="btn link">Check Order Status</a>
@@ -18,4 +31,21 @@
 
 <div class="orders col">
 <h4>Oldest Unshipped Orders:</h4>
+<% if (orders) { orders.map((i) => { %>
+<details><summary>Order: <%= i["ReqShipDate"] %></summary>
+<div class="property-list">
+<% Object.keys(i).map((k) => { %>
+<hr/>
+<div class="property">
+<div class="property-label"><b><%= k %></b>: </div>
+<% if (k === 'Tracking Number') { %>
+<div class="property-value"><pre><a href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= i[k] %>"><%= i[k] %></a></pre></div>
+<% } else { %>
+<div class="property-value"><pre><%= i[k] %></pre></div>
+<% } %>
+</div>
+<% }) %>
+</div>
+</details>
+<% })} %>
 </div>
