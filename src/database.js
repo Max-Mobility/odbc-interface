@@ -62,11 +62,17 @@ function makeQueries(table, data) {
         if (data[f]) {
             if (numbers.indexOf(f) > -1) {
                 q.push({
-                    [f]: padNumber(data[f])
+                    operator: 'LIKE',
+                    column: f,
+                    pattern: `%${padNumber(data[f])}%`
+                    //[f]: padNumber(data[f])
                 });
             } else {
                 q.push({
-                    [f]: data[f]
+                    operator: 'LIKE',
+                    column: f,
+                    pattern: `%${data[f]}%`
+                    //[f]: data[f]
                 });
             }
         }
@@ -252,7 +258,9 @@ function getCustomer(customer_number) {
             table: t,
             queries: [
                 {
-                    "Customer": padNumber(customer_number)
+                    operator: 'LIKE',
+                    column: 'Customer',
+                    pattern: `%${padNumber(customer_number)}%`
                 }
             ]
         };
@@ -280,7 +288,9 @@ function getRMAs(customer_number) {
         table: 'RmaMaster',
         queries: [
             {
-                "Customer": customer_number
+                operator: 'LIKE',
+                column: 'Customer',
+                pattern: `%${customer_number}%`
             }
         ]
     };
@@ -300,7 +310,9 @@ function getRMA(rma_number) {
             table: t,
             queries: [
                 {
-                    "RmaNumber": padNumber(rma_number)
+                    operator: 'LIKE',
+                    column: 'RmaNumber',
+                    pattern: `%${padNumber(rma_number)}%`
                 }
             ]
         };
@@ -328,7 +340,9 @@ function getDevices(customer_number) {
         table: 'InvSerialHead',
         queries: [
             {
-                "Customer": customer_number
+                operator: 'LIKE',
+                column: 'Customer',
+                pattern: `%${customer_number}%`
             }
         ]
     };
@@ -348,7 +362,9 @@ function getDevice(serial_number) {
             table: t,
             queries: [
                 {
-                    "Serial": serial_number
+                    operator: 'LIKE',
+                    column: 'Serial',
+                    pattern: `${serial_number}`
                 }
             ]
         };
@@ -376,7 +392,9 @@ function getOrders(customer_number) {
         table: 'SorMaster',
         queries: [
             {
-                "Customer": customer_number
+                operator: 'LIKE',
+                column: 'Customer',
+                pattern: `%${customer_number}%`
             }
         ]
     };
@@ -396,7 +414,9 @@ function getOrder(order_number) {
             table: t,
             queries: [
                 {
-                    "SalesOrder": padNumber(order_number)
+                    operator: 'LIKE',
+                    column: 'SalesOrder',
+                    pattern: `%${padNumber(order_number)}%`
                 }
             ]
         };
@@ -424,7 +444,9 @@ function getOrderByMarkFor(markfor) {
         table: 'CusSorMaster+',
         queries: [
             {
-                "MarkFor": markfor
+                operator: 'LIKE',
+                column: 'MarkFor',
+                pattern: `%${markfor}%`
             }
         ]
     };
@@ -444,7 +466,9 @@ function getDeviceByInvoice(invoice) {
         table: 'InvSerialTrn',
         queries: [
             {
-                "Invoice": invoice
+                operator: 'LIKE',
+                column: 'Invoice',
+                pattern: `%${invoice}%`
             }
         ]
     };
@@ -687,19 +711,23 @@ function lookup(opts) {
 
         var table = opts.table;
 
-        var query = `select * from [${table}]`;
+        var query = '';
+        if (opts.top > 0) {
+            query = `select TOP ${opts.top} from [${table}]`;
+        } else {
+            query = `select * from [${table}]`;
+        }
         if (opts.queries.length) {
             query += ' where';
         }
         opts.queries.map(q => {
-            Object.entries(q).map(e => {
-                var k = e[0],
-                    v = e[1];
-                //console.log(e);
-                if (v && v.length) {
-                    query += ` LOWER(${k}) LIKE LOWER('%${v}%') AND`;
-                }
-            });
+            if (q.pattern && q.pattern.length) {
+                var col = `LOWER(${q.column})`;
+                var pattern = `LOWER('${q.pattern}')`;
+                var operator = `${q.operator}`;
+                var invert = q.invert ? `NOT` : '';
+                query += ` ${invert} ${col} ${operator} ${pattern} AND`;
+            }
         });
         query = query.replace(/AND$/, ';');
         console.log(query);
@@ -724,7 +752,9 @@ function checkRMA(rma) {
         table: 'RmaMaster',
         queries: [
             {
-                RmaNumber: rma
+                operator: 'LIKE',
+                column: 'RmaNumber',
+                pattern: `%${rma}%`
             }
         ]
     }).then((data) => {
@@ -733,7 +763,9 @@ function checkRMA(rma) {
             table: 'RmaMaster+',
             queries: [
                 {
-                    RmaNumber: rma
+                    operator: 'LIKE',
+                    column: 'RmaNumber',
+                    pattern: `%${rma}%`
                 }
             ]
         });
@@ -743,7 +775,9 @@ function checkRMA(rma) {
             table: 'RmaDetail',
             queries: [
                 {
-                    RmaNumber: rma
+                    operator: 'LIKE',
+                    column: 'RmaNumber',
+                    pattern: `%${rma}%`
                 }
             ]
         });
@@ -753,7 +787,9 @@ function checkRMA(rma) {
             table: 'RmaDetailSer',
             queries: [
                 {
-                    RmaNumber: rma
+                    operator: 'LIKE',
+                    column: 'RmaNumber',
+                    pattern: `%${rma}%`
                 }
             ]
         });
@@ -769,7 +805,9 @@ function checkOrder(order) {
         table: 'SorMaster',
         queries: [
             {
-                SalesOrder: order
+                operator: 'LIKE',
+                column: 'SalesOrder',
+                pattern: `%${order}%`
             }
         ]
     }).then((data) => {
@@ -778,7 +816,9 @@ function checkOrder(order) {
             table: 'SorDetail',
             queries: [
                 {
-                    SalesOrder: order
+                    operator: 'LIKE',
+                    column: 'SalesOrder',
+                    pattern: `%${order}%`
                 }
             ]
         });

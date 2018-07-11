@@ -34,12 +34,15 @@
 
 <div class="results">
 
-<% if (customer && customer.Number) { %>
 <div class="customer-info">
+<% if (customer && customer.Number) { %>
 <h3>Customer <font color="blue"><%= customer.Name %></font></h3>
-</div>
 <% } else { %>
+<% Object.keys(data).filter(k => k !== '_csrf').map((k) => { var d = data[k]; if (d) { %>
+<h3><font color="Red">Couldn't find data by '<%= d %>'</font></h3>
+<% }}) %>
 <% } %>
+</div>
 
 <div class="orders col">
 <h4>Orders</h4>

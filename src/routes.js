@@ -43,7 +43,24 @@ var templateContext = function() {
 }
 
 router.get('/', (req, res) => {
-    res.render('index')
+    // get orders that don't have an invoice and have order status of 1
+    // sort by oldest required ship date
+    // 25?
+    // don't want sales rep that are 999 (warranty parts)
+
+    var lu = {
+        table: 'SorMaster',
+        top: 10,
+        queries: [
+        ]
+    };
+
+    res.render('index', {
+        data: req.body,
+        errors: {},
+        orders: [],
+        shipDays: 7
+    });
 });
 
 // feedback!
@@ -443,6 +460,10 @@ router.get('/search_by_markfor', (req, res) => {
 });
 
 router.post('/search_by_markfor', [
+    check('Mark For')
+        .isLength({ min: 1 })
+        .withMessage('Mark For is required')
+        .trim()
 ], (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -580,7 +601,10 @@ router.post('/search', [
         };
         if (customer.Number) {
             lookupOpts.queries.push({
-                'Customer': customer.Number
+                operator: 'LIKE',
+                column: 'Customer',
+                pattern: `%${customer.Number}%`
+                //'Customer': customer.Number
             });
             return db.lookup(lookupOpts);
         } else {
@@ -598,12 +622,18 @@ router.post('/search', [
         };
         if (req.body["RMA Number"]) {
             lookupOpts.queries.push({
-                'RmaNumber': db.padNumber(req.body["RMA Number"])
+                operator: 'LIKE',
+                column: 'RmaNumber',
+                pattern: `%${db.padNumber(req.body["RMA Number"])}%`
+                //'RmaNumber': db.padNumber(req.body["RMA Number"])
             });
             return db.lookup(lookupOpts);
         } else if (customer.Number) {
             lookupOpts.queries.push({
-                'Customer': customer.Number
+                operator: 'LIKE',
+                column: 'Customer',
+                pattern: `%${customer.Number}%`
+                //'Customer': customer.Number
             });
             return db.lookup(lookupOpts);
         } else {
@@ -623,12 +653,18 @@ router.post('/search', [
         };
         if (req.body["Serial Number"]) {
             lookupOpts.queries.push({
-                'Serial': req.body["Serial Number"]
+                operator: 'LIKE',
+                column: 'Serial',
+                pattern: `%${req.body["Serial Number"]}%`
+                //'Serial': req.body["Serial Number"]
             });
             return db.lookup(lookupOpts);
         } else if (customer.Number) {
             lookupOpts.queries.push({
-                'Customer': customer.Number
+                operator: 'LIKE',
+                column: 'Customer',
+                pattern: `%${customer.Number}%`
+                //'Customer': customer.Number
             });
             return [];//db.lookup(lookupOpts);
         } else {
