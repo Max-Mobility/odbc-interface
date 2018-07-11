@@ -97,6 +97,7 @@ router.get('/', (req, res) => {
         res.render('index', {
             data: req.body,
             errors: {},
+            moment: moment,
             orders: data,
             shipDays: shipDays,
             businessDays: businessDays,
@@ -111,6 +112,7 @@ router.get('/', (req, res) => {
                     msg: err.message
                 }
             },
+            moment: moment,
             orders: [],
             shipDays: 'UNKNOWN',
             businessDays: 'UNKNOWN',
