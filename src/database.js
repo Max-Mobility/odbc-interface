@@ -742,6 +742,9 @@ function lookup(opts) {
 
         db.query(query, (err, data) => {
             if (err) {
+                console.log('Query Error!');
+                console.log(Object.keys(err));
+                console.log(err);
                 if (err.message && err.message.includes('Communication link failure')) {
                     // try to re-open the connection
                     open();

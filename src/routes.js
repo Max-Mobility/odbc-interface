@@ -90,7 +90,7 @@ router.get('/', (req, res) => {
         var oldest = new Date(data[0].OrderDate);
         var shipDays = moment(today).diff(moment(oldest), 'days');
         var businessDays = business.weekDays(moment(oldest), moment(today));
-        console.log(businessDays);
+        console.log(`Shipping in ${businessDays} business days!`);
         var shipColor = 'green';
         if (shipDays > 5) shipColor = 'orange';
         if (shipDays > 7) shipColor = 'red';
