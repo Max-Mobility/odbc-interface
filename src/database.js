@@ -93,7 +93,7 @@ function combineShipping(input) {
 }
 
 const exists = (_i) => {
-    let i = _i.trim();
+    let i = (_i && _i.trim && _i.trim()) || _i;
     return (i > 0) || (i && i.length);
 };
 
@@ -240,6 +240,7 @@ const types = {
             'Description': 'SerialDescription',
             'Stock Code': 'StockCode',
             'Service Flag': 'ServiceFlag',
+			'Location': 'Location'
         },
         create: function(input, output, customer) {
             var o = Object.keys(this.inputMap).reduce((a, e) => {
