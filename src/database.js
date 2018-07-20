@@ -469,7 +469,10 @@ function getOrderByMarkFor(markfor) {
 			return orders.sort((a,b) => {
 				let amf = a["Mark For"].toLowerCase();
 				let bmf = b["Mark For"].toLowerCase();
-				return amf.localeCompare(bmf);
+				let aeq = amf === markfor.toLowerCase();
+				let beq = bmf === markfor.toLowerCase();
+				let offset = (aeq ? -1 : 1) + (beq ? 1 : -1);
+				return amf.localeCompare(bmf) + offset;
 			});
 		});
     });
