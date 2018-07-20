@@ -199,7 +199,7 @@ const types = {
 			var mf = o["Mark For"];
 			mf = exists(mf) ? `<font color=\"blue\">${mf}</font>` :
 				"<font color=\"gray\">No Mark For</font>";
-			o["__DISPLAY__"] = `<span>Order: ${o["Order Number"]}: ${mf}</span>`;
+			o["__DISPLAY__"] = `<span>Order: ${parseInt(o["Order Number"])}: ${mf}</span>`;
             return o;
         }
     },
