@@ -44,7 +44,7 @@
 <div class="orders col">
 <h4>Orders</h4>
 <% if (orders) { orders.map((i) => { %>
-<details><summary>Order: <%= i["Order Number"] %></summary>
+<details><summary><%- i["__DISPLAY__"] %></summary>
 <div class="property-list">
 <% Object.keys(i).map((k) => { %>
 <hr/>

@@ -93,8 +93,11 @@ function combineShipping(input) {
 }
 
 const exists = (_i) => {
-    let i = (_i && _i.trim && _i.trim()) || _i;
-    return (i > 0) || (i && i.length);
+	if (typeof _i === 'string') {
+		return _i.trim().length;
+	} else {
+		return _i;
+	}
 };
 
 const mergeObjects = (output, a, b) => {
@@ -193,6 +196,10 @@ const types = {
                 return a;
             }, {});
             o["Shipping Address"] = combineShipping(input);
+			var mf = o["Mark For"];
+			mf = exists(mf) ? `<font color=\"blue\">${mf}</font>` :
+				"<font color=\"gray\">No Mark For</font>";
+			o["__DISPLAY__"] = `<span>Order: ${o["Order Number"]}: ${mf}</span>`;
             return o;
         }
     },
@@ -223,7 +230,7 @@ const types = {
             }, {});
             o["Shipping Address"] = combineShipping(input);
             return o;
-        } 
+        }
     },
     "Device": {
         field: "Serial",
@@ -458,7 +465,13 @@ function getOrderByMarkFor(markfor) {
             console.log(`Looking up order: ${order}`);
             return getOrder(order);
         });
-        return Promise.all(tasks);
+        return Promise.all(tasks).then((orders) => {
+			return orders.sort((a,b) => {
+				let amf = a["Mark For"].toLowerCase();
+				let bmf = b["Mark For"].toLowerCase();
+				return amf.localeCompare(bmf);
+			});
+		});
     });
 };
 
