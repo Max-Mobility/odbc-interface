@@ -32,7 +32,7 @@
 <div class="orders col">
 <h4>Oldest Unshipped Orders:</h4>
 <% if (orders) { orders.map((i) => { %>
-<details><summary><%= i["SalesOrder"] %>: <%= moment(i["OrderDate"]).calendar() %></summary>
+<details><summary>Order: <%= parseInt(i["SalesOrder"]) %> - <%= moment(i["OrderDate"]).calendar() %></summary>
 <div class="property-list">
 <% Object.keys(i).map((k) => { %>
 <hr/>
