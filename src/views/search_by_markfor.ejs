@@ -44,8 +44,8 @@
 
 <div class="orders col">
 <h4>Orders</h4>
-<% if (orders) { orders.map((i) => { %>
-<details><summary>Order: <%= i["Order Number"] %></summary>
+<% if (orders) { orders.sort((a,b) => a["Mark For"].toLowerCase().localeCompare(b["Mark For"].toLowerCase())).map((i) => { %>
+<details><summary>Order: <%= i["Order Number"] %>: <%= i["Mark For"] %></summary>
 <div class="property-list">
 <% Object.keys(i).map((k) => { %>
 <hr/>
