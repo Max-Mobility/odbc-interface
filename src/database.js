@@ -181,6 +181,9 @@ const types = {
             'Last Invoice': "LastInvoice",
             'Last Operator': "LastOperator",
             'Job': "Job",
+			'Stock Code': "MStockCode",
+			'Stock Description': "MStockDes",
+			'Ship Quantity': "MShipQty",
             'Serialised?': "SerialisedFlag",
             'Jobs Exist?': "JobsExistFlag",
         },
@@ -219,6 +222,7 @@ const types = {
             "Operator": 'Operator',
 			"Sales Order": 'RecSalesOrder',
             "Entry Date": 'EntryDate',
+			"Job": 'Job',
             "Last Transaction Date": 'LastTranactDate',
             "Special Instructions": 'SpecialInstrs',
             "Service Ticket": 'ServiceTicket',
@@ -233,6 +237,27 @@ const types = {
             return o;
         }
     },
+	"Job": {
+		field: "Job",
+		tables: [
+			"WipMaster",
+			"WipJobPost",
+		],
+		inputMap: {
+			"Job": "Job",
+			"Complete": "Complete",
+			"Stock Code": "MStockCode",
+			"Description": "MDescription",
+			"Quantity Issued": "MQtyIssued"
+		},
+		create: function(input) {
+            var o = Object.keys(this.inputMap).reduce((a, e) => {
+                a[e] = input[this.inputMap[e]];
+                return a;
+            }, {});
+            return o;
+        }
+	},
     "Device": {
         field: "Serial",
         tables: [
