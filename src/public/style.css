@@ -159,12 +159,12 @@ h4 {
 .property-label {
     vertical-align: middle;
     display: table-cell;
-    padding: 5px 5px 0 5px;
+    padding: 1% 0%;
 }
 .property-value {
     vertical-align: middle;
     display: table-cell;
-    padding: 5px 10px 0 10px;
+    padding: 1% 0%;
     background: #fff;
 }
 
@@ -185,7 +185,7 @@ summary {
     font-size: 1.3em;
     font-weight: bold;
     margin: 0;
-    padding: 8px 0;
+    padding: 1% 0%;
     position: relative;
     width: 100%;
 }

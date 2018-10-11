@@ -217,6 +217,7 @@ const types = {
             "Customer Number": 'Customer',
             "Customer Name": 'CustomerName',
             "Operator": 'Operator',
+			"Sales Order": 'RecSalesOrder',
             "Entry Date": 'EntryDate',
             "Last Transaction Date": 'LastTranactDate',
             "Special Instructions": 'SpecialInstrs',
@@ -610,7 +611,7 @@ const tables = {
             'ServiceTicket',
             'Contact',
             'LanguageCode',
-            'TimeStamp'            
+            'TimeStamp'
         ],
         "makeObject": function(input, output, customer) {
             output["RMA Number"] = input.RmaNumber;

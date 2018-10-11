@@ -46,7 +46,7 @@
 <% if (orders) { orders.map((i) => { %>
 <details><summary><%- i["__DISPLAY__"] %></summary>
 <div class="property-list">
-<% Object.keys(i).map((k) => { %>
+<% Object.keys(i).filter(k => k[0] != '_').map((k) => { %>
 <hr/>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>
@@ -67,7 +67,7 @@
 <% if (rmas) { rmas.map((i) => { %>
 <details><summary>RMA: <%= i["RMA Number"] %></summary>
 <div class="property-list">
-<% Object.keys(i).map((k) => { %>
+<% Object.keys(i).filter(k => k[0] != '_').map((k) => { %>
 <hr/>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>
@@ -84,7 +84,7 @@
 <% if (devices) { devices.map((i) => { %>
 <details><summary>Device: <%= i["Serial Number"] %></summary>
 <div class="property-list">
-<% Object.keys(i).map((k) => { %>
+<% Object.keys(i).filter(k => k[0] != '_').map((k) => { %>
 <hr/>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>

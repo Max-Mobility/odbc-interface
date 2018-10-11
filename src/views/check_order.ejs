@@ -39,7 +39,7 @@
 <% if (i["Order Number"] !== null && i["Order Number"] !== undefined) { %>
 <details open><summary>Order: <%= i["Order Number"] %></summary>
 <div class="property-list">
-<% Object.keys(i).sort().map((k) => { %>
+<% Object.keys(i).filter(k => k[0] != '_').sort().map((k) => { %>
 <hr/>
 <% if (i[k] !== null && i[k] !== undefined) { %>
 <div class="property">

@@ -463,36 +463,31 @@ router.post('/search_by_rma', [
         csrfToken: req.csrfToken()
     });
 
-    var customer = {};
     var orders = []   // get orders here
     var rmas = [];    // get rmas here
     var devices = []; // get serial numbers and such here
-    
+
     return db.getRMA(input.RmaNumber).then((rma) => {
         // PULL OUT DATA
         rmas = [rma];
-        if (rma && rma["Customer Number"]) {
-            return db.getCustomer(rma['Customer Number']);
+        if (rma && rma["Sales Order"]) {
+            return db.getOrder(rma['Sales Order']);
         } else {
             throw ({
                 message: 'Could not find by rma number: ' + input.RmaNumber
             });
         }
-    }).then((c) => {
-        customer = c;
-        orders = db.getOrders(customer.Number);
+    }).then((o) => {
+        orders = [o];
         //rmas = db.getRMAs(customer.Number);
         if (db.exists(rmas[0]['Serial Number'])) {
-            devices = db.getDevice(rmas[0]['Serial Number']);
+            return db.getDevice(rmas[0]['Serial Number']);
         } else {
-            devices = [];
+            return []
         }
-        return Promise.all([orders, devices]);
-    }).then((objects) => {
-        orders = objects[0];
-        devices = objects[1];
+    }).then((devs) => {
+        devices = devs
         // now render the data
-        context.customer = customer;
         context.orders = orders;
         context.rmas = rmas;
         context.devices = [devices];
