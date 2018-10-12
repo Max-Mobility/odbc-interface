@@ -570,19 +570,20 @@ router.post('/print_rma', [
 			console.log(JSON.stringify(orderPart, null, 2));
 			job.Parts.push(orderPart);
 		}
+		context.layout = false; // don't render within layout.ejs
         context.order = order;
         context.rma = rma;
 		context.job = job;
 		context.date = moment(new Date()).format('MM / DD / YYYY');
         console.log('rendering data!');
-        res.render('rma_report', context);
+        return res.render('rma_report', context);
     }).catch((err) => {
         // got an error - render it!
         console.log('caught error!');
         context.errors.server = {
             msg: err.message
         }
-        res.render('print_rma', context);
+        return res.render('print_rma', context);
     });
 });
 

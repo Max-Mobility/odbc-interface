@@ -43,6 +43,15 @@
 	  .table-header {
 	  font-weight: 700;
 	  }
+	  .table-no-border {
+	  border: none;
+	  }
+	  .table-no-border tr {
+	  border: none;
+	  }
+	  .table-no-border td{
+	  border: none;
+	  }
 	  .title {
 	  font-weight: bold;
 	  font-size: 18;
@@ -123,7 +132,7 @@
 			<td class="table-header">Description</td>
 		  </tr>
 		  <% for (var p in job.Parts) { let part = job.Parts[p]; %>
-		  <tr>
+		  <tr class="table-no-border">
 			<td><%- part["Quantity Issued"] %></td>
 			<td><%- part["Stock Code"] %></td>
 			<td><%- part["Description"] %></td>
