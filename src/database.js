@@ -274,6 +274,23 @@ const types = {
 			"Description": "MDescription",
 			"Quantity Issued": "MQtyIssued"
 		},
+		codeMap: {
+			"MX2SD-P001": { "Stock Code": "MX2-906", "Description": "DRIVE UNIT UPPER AND LOWER HOUSING ASSY." },
+			"MX2SD-P002": { "Stock Code": "MX2-907", "Description": "DRIVE UNIT LOWER HOUSING" },
+			"MX2SD-P015": { "Stock Code": "MX2-903", "Description": "DRIVE UNIT BATTERY PACK" },
+			"MX2SD-P016": { "Stock Code": "MX2-912", "Description": "DRIVE UNIT CHARGER TRANSFORMER BOX" },
+			"MX2SD-P017": { "Stock Code": "MX2-940", "Description": "DRIVE UNIT RECEPTACLE CAP" },
+			"MX2SD-P018": { "Stock Code": "MX2-905", "Description": "DRIVE UNIT HANDLE" },
+			"MX2SD-P020": { "Stock Code": "MX2-944", "Description": "DRIVE UNIT MOTOR" },
+			"MX2SD-P026": { "Stock Code": "MX2-936", "Description": "DRIVE UNIT POWER SWITCH" },
+			"MX2SD-P027": { "Stock Code": "MX2-942", "Description": "DRIVE UNIT CHARGER RECEPTACLE" },
+			"MX2SD-P028": { "Stock Code": "MX2-904", "Description": "DRIVE UNIT LED CIRCUIT BOARD ASSY." },
+				"MX2SD-P040": { "Stock Code": "MX2-946", "Description": "(1) ROLLER W/ BEARINGS" },
+			"MX2SD-P041": { "Stock Code": "MX2-909", "Description": "ROLLER REPLACEMENT KIT" },
+			"MX2SD-P042": { "Stock Code": "MX2-910", "Description": "(4) MOTOR OUTER COVERS" },
+			"MX2SD-P090": { "Stock Code": "MX2-902", "Description": "DRIVE UNIT CIRCUIT BOARD" },
+			"SSLC258V29": { "Stock Code": "MX1-038", "Description": "MX1 BATTERY CHARGER" },
+		},
 		create: function(input) {
             var o = Object.keys(this.inputMap).reduce((a, e) => {
 				let val = input[this.inputMap[e]];
@@ -281,6 +298,11 @@ const types = {
 					a[e] = val
                 return a;
             }, {});
+			var key = o["Stock Code"];
+			if (Object.keys(this.codeMap).indexOf(key) > -1) {
+				o["Description"] = this.codeMap[key]["Description"];
+				o["Stock Code"] = this.codeMap[key]["Stock Code"];
+			}
             return o;
         }
 	},
