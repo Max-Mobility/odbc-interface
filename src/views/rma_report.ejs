@@ -1,0 +1,148 @@
+<html>
+  <head>
+	<meta charset="utf8">
+	<title>RMA</title>
+	<style>
+	  html, body {
+	  margin: 0;
+	  padding: 0;
+	  height: 100%;
+	  width: 100%;
+	  font-family: 'Andale Mono, monospace';
+	  font-weight: 500;
+	  font-size: 15px;
+	  -webkit-print-color-adjust: exact;
+	  box-sizing: border-box;
+	  }
+	  footer {
+	  page-break-after: always;
+	  }
+	  table {
+	  margin: 1% 0%;
+	  height: auto;
+	  width: auto;
+	  vertical-align: middle;
+	  }
+	  table, th, td {
+	  font-size: 15px;
+	  border: 1px solid black;
+	  border-collapse: collapse;
+	  text-align: center;
+	  }
+	  th, td {
+	  padding: 3px;
+	  }
+
+	  .header, .revision-history {
+	  width: -webkit-fill-available;
+	  height: auto;
+	  float: left;
+	  margin: 1%;
+	  }
+
+	  .table-header {
+	  font-weight: 700;
+	  }
+	  .title {
+	  font-weight: bold;
+	  font-size: 18;
+	  }
+	  .location,
+	  .doc-title {
+	  font-size: 16;
+	  }
+	</style>
+  </head>
+  <body>
+	<div class="header">
+	  <div style="">
+		<div style="width: 40%;float: left;">
+		  <span class="title">Max Mobility, LLC<br></span>
+		  <span class="location">
+			5425 Crossings Blvd<br>
+			Antioch, TN 371013-3149<br>
+			USA<br>
+			Phone: 1-800-637-2980<br>
+			Fax: 1-888-411-9027<br>
+			FEIN: 32-0163211
+		  </span>
+		</div>
+		<div style="width: 40%;float: right;">
+		  <div style="text-align: right;">
+			<span class="title" style="font-size:20">RMA<br></span>
+		  </div>
+		  <table style="border: none; float: right;">
+			<tbody style="border: none;">
+			  <tr>
+				<td>Date</td>
+				<td>RMA #</td>
+			  </tr>
+			  <tr>
+				<td><%- date %></td>
+				<td><%- rma["RMA Number"] %></td>
+			  </tr>
+			</tbody>
+		  </table>
+		</div>
+	  </div>
+	</div>
+	<div class="revision-history">
+	  <table style="width: 50%;">
+		<tbody>
+		  <tr>
+			<td class="table-header" style="text-align: left;">Ship To</td>
+		  </tr>
+		  <tr>
+			<td style="text-align: left;">
+			  <span>
+				<%- rma["Shipping Address"].replace(/\n/gm, "<br>") %>
+			  </span>
+			</td>
+		  </tr>
+	  </tbody></table><table style="width: 100%;">
+		<tbody>
+		  <tr>
+			<td class="table-header">Dealer Email Address</td>
+			<td class="table-header">Rep</td>
+			<td class="table-header">Rep Email Address</td>
+			<td class="table-header">P.O. Number</td>
+		  </tr>
+		  <tr>
+			<td><%- order["Dealer Email"] %></td>
+			<td><%- order["CustomerName"] %></td>
+			<td><%- order["Email"] %></td>
+			<td><%- order["PO Number"] %></td>
+		  </tr>
+		</tbody>
+	  </table>
+	  <table style="width: 100%;">
+		<tbody>
+		  <tr>
+			<td class="table-header">Mark For</td>
+			<td class="table-header">Shipping</td>
+		  </tr>
+		  <tr>
+			<td><%- order["Mark For"] %></td>
+			<td><%- order["Shipping Instructions"] %></td>
+		  </tr>
+		</tbody>
+	  </table>
+	  <table style="width: 100%;">
+		<tbody>
+		  <tr>
+			<td class="table-header" style="width: 10%;">Quantity</td>
+			<td class="table-header" style="width: 30%;">Item Code</td>
+			<td class="table-header">Description</td>
+		  </tr>
+		  <% for (var p in job.Parts) { let part = job.Parts[p]; %>
+		  <tr>
+			<td><%- part["Quantity Issued"] %></td>
+			<td><%- part["Stock Code"] %></td>
+			<td><%- part["Description"] %></td>
+		  </tr>
+		  <% } %>
+		</tbody>
+	  </table>
+	</div>
+  </body>
+</html>

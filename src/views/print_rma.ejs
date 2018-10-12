@@ -1,0 +1,33 @@
+<!-- views/print_rma.ejs -->
+<div class="form-header">
+<a href="/" class="red link btn">Back to Main Page</a>
+<a href="/feedback" class="red link btn">Report Issue / Provide Feedback</a>
+</div>
+<div class="form-header">
+  <% if (Object.keys(errors).length === 0) { %>
+    <h2>Enter Search Options</h2>
+  <% } else { %>
+    <h2 class="errors-heading">Oops, please correct the following:</h2>
+    <ul class="errors-list">
+      <% Object.values(errors).forEach(error => { %>
+        <li><%= error.msg %></li>
+      <% }) %>
+    </ul>
+  <% } %>
+</div>
+
+<form method="post" action="/print_rma" novalidate>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <% for (var field in rma_search_fields) { let f = rma_search_fields[field]; %>
+  <div class="form-field <%= errors[f.title] ? 'form-field-invalid' : '' %>">
+    <label><%= f.title %></label>
+    <input class="input" id="<%= f.id %>" name="<%= f.id %>" value="<%= data[f.title] %>" />
+    <% if (errors[f.title]) { %>
+      <div class="error"><%= errors[f.title].msg %></div>
+    <% } %>
+  </div>
+  <% } %>
+  <div class="form-actions">
+    <button class="btn" type="submit">Print</button>
+  </div>
+</form>

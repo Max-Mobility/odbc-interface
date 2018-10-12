@@ -241,11 +241,25 @@ const types = {
 		field: "Job",
 		tables: [
 			"WipMaster",
-			"WipJobPost",
 		],
 		inputMap: {
 			"Job": "Job",
 			"Complete": "Complete",
+		},
+		create: function(input) {
+            var o = Object.keys(this.inputMap).reduce((a, e) => {
+                a[e] = input[this.inputMap[e]];
+                return a;
+            }, {});
+            return o;
+        }
+	},
+	"Part": {
+		field: "Job",
+		tables: [
+			"WipJobPost",
+		],
+		inputMap: {
 			"Stock Code": "MStockCode",
 			"Description": "MDescription",
 			"Quantity Issued": "MQtyIssued"
@@ -366,6 +380,62 @@ function getRMA(rma_number) {
         return types.RMA.create(obj);
     }).catch((err) => {
         console.log(`cannot get rma: ${err}`);
+    });
+};
+
+function getParts(job_number) {
+    // Loop through our tables
+    var tasks = types.Part.tables.map((t) => {
+        var lu = {
+            table: t,
+            queries: [
+                {
+                    operator: 'LIKE',
+                    column: 'Job',
+                    pattern: `%${padNumber(job_number)}%`
+                }
+            ]
+        };
+        return lookup(lu);
+    });
+    return Promise.all(tasks).then((dataArray) => {
+		return _.flatten(dataArray).map((o) => {
+			return types.Part.create(o);
+		});
+    }).catch((err) => {
+        console.log(`cannot get parts for job: ${err}`);
+    });
+};
+
+function getJob(job_number) {
+    // Loop through our tables
+    var tasks = types.Job.tables.map((t) => {
+        var lu = {
+            table: t,
+            queries: [
+                {
+                    operator: 'LIKE',
+                    column: 'Job',
+                    pattern: `%${padNumber(job_number)}%`
+                }
+            ]
+        };
+        return lookup(lu);
+    });
+    return Promise.all(tasks).then((dataArray) => {
+        return dataArray.reduce((a, e) => {
+            var output = a;
+            if (e.length) {
+                e.map((o) => {
+                    output = mergeObjects(output, o);
+                });
+            }
+            return output;
+        }, {});
+    }).then((obj) => {
+        return types.Job.create(obj);
+    }).catch((err) => {
+        console.log(`cannot get job: ${err}`);
     });
 };
 
@@ -887,6 +957,8 @@ module.exports = {
     // functions for objects
     getCustomer,
     getRMA,
+	getJob,
+	getParts,
     getDevice,
     getOrder,
     getRMAs,

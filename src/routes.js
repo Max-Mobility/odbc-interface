@@ -503,6 +503,84 @@ router.post('/search_by_rma', [
     });
 });
 
+// PRINT RMA PAGE
+router.get('/print_rma', (req, res) => {
+    res.render('print_rma', Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    }));
+});
+
+router.post('/print_rma', [
+], (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.render('print_rma', Object.assign(templateContext(), {
+            data: req.body,
+            errors: errors.mapped(),
+            csrfToken: req.csrfToken()
+        }));
+    }
+
+    const fields = Object.keys(db.fieldMap);
+    const input = Object.keys(req.body).reduce((a, e) => {
+        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
+            a[db.fieldMap[e]] = req.body[e];
+        }
+        return a;
+    }, {});
+
+    var context = Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        csrfToken: req.csrfToken()
+    });
+
+    var order = null;
+    var rma = null;
+	var job = null;
+
+    return db.getRMA(input.RmaNumber).then((r) => {
+        // PULL OUT DATA
+		rma = r;
+        if (rma && rma["Sales Order"]) {
+            return db.getOrder(rma['Sales Order']);
+        } else {
+            throw ({
+                message: 'Could not find by rma number: ' + input.RmaNumber
+            });
+        }
+    }).then((o) => {
+        order = o;
+        if (rma && rma["Job"]) {
+            return db.getJob(rma['Job']);
+        } else {
+            throw ({
+                message: 'Could not find job for rma: ' + input.RmaNumber
+            });
+        }
+    }).then((j) => {
+        job = j;
+		return db.getParts(rma['Job']);
+	}).then((parts) => {
+		job.Parts = parts;
+        context.order = order;
+        context.rma = rma;
+		context.job = job;
+		context.date = moment(new Date()).format('MM / DD / YYYY');
+        console.log('rendering data!');
+        res.render('rma_report', context);
+    }).catch((err) => {
+        // got an error - render it!
+        console.log('caught error!');
+        context.errors.server = {
+            msg: err.message
+        }
+        res.render('print_rma', context);
+    });
+});
+
 // search page
 router.get('/search_by_markfor', (req, res) => {
     res.render('search_by_markfor', Object.assign(templateContext(), {
