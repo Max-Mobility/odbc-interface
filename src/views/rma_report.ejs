@@ -102,28 +102,16 @@
 	  </tbody></table><table style="width: 100%;">
 		<tbody>
 		  <tr>
-			<td class="table-header">Dealer Email Address</td>
-			<td class="table-header">Rep</td>
-			<td class="table-header">Rep Email Address</td>
+			<td class="table-header">Dealer / Customer Email Address</td>
+			<td class="table-header">Attention</td>
+			<td class="table-header">Shipping</td>
 			<td class="table-header">P.O. Number</td>
 		  </tr>
 		  <tr>
-			<td><%- order["Dealer Email"] %></td>
-			<td><%- order["CustomerName"] %></td>
-			<td><%- order["Email"] %></td>
-			<td><%- order["PO Number"] %></td>
-		  </tr>
-		</tbody>
-	  </table>
-	  <table style="width: 100%;">
-		<tbody>
-		  <tr>
-			<td class="table-header">Mark For</td>
-			<td class="table-header">Shipping</td>
-		  </tr>
-		  <tr>
-			<td><%- order["Mark For"] %></td>
+			<td><%- rma["Email"] %></td>
+			<td><%- rma["Attention"] %></td>
 			<td><%- order["Shipping Instructions"] %></td>
+			<td><%- order["PO Number"] %></td>
 		  </tr>
 		</tbody>
 	  </table>

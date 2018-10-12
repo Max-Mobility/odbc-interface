@@ -565,6 +565,11 @@ router.post('/print_rma', [
 		return db.getParts(rma['Job']);
 	}).then((parts) => {
 		job.Parts = parts;
+		let orderPart = db.types.Part.create(order);
+		if (!_.isEmpty(orderPart)) {
+			console.log(JSON.stringify(orderPart, null, 2));
+			job.Parts.push(orderPart);
+		}
         context.order = order;
         context.rma = rma;
 		context.job = job;

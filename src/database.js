@@ -143,7 +143,9 @@ const types = {
         },
         create: function(input) {
             var o = Object.keys(this.inputMap).reduce((a, e) => {
-                a[e] = input[this.inputMap[e]];
+				let val = input[this.inputMap[e]];
+				if (val !== undefined)
+					a[e] = val
                 return a;
             }, {});
             return o;
@@ -195,7 +197,9 @@ const types = {
             customer["Email"] = input.Email;
             */
             var o = Object.keys(this.inputMap).reduce((a, e) => {
-                a[e] = input[this.inputMap[e]];
+				let val = input[this.inputMap[e]];
+				if (val !== undefined)
+					a[e] = val
                 return a;
             }, {});
             o["Shipping Address"] = combineShipping(input);
@@ -216,6 +220,8 @@ const types = {
         ],
         inputMap: {
             "RMA Number": 'RmaNumber',
+			"Attention": 'Attention',
+			"Email": 'Email',
             "Status": 'Status',
             "Customer Number": 'Customer',
             "Customer Name": 'CustomerName',
@@ -230,7 +236,9 @@ const types = {
         },
         create: function(input) {
             var o = Object.keys(this.inputMap).reduce((a, e) => {
-                a[e] = input[this.inputMap[e]];
+				let val = input[this.inputMap[e]];
+				if (val !== undefined)
+					a[e] = val
                 return a;
             }, {});
             o["Shipping Address"] = combineShipping(input);
@@ -248,7 +256,9 @@ const types = {
 		},
 		create: function(input) {
             var o = Object.keys(this.inputMap).reduce((a, e) => {
-                a[e] = input[this.inputMap[e]];
+				let val = input[this.inputMap[e]];
+				if (val !== undefined)
+					a[e] = val
                 return a;
             }, {});
             return o;
@@ -266,7 +276,9 @@ const types = {
 		},
 		create: function(input) {
             var o = Object.keys(this.inputMap).reduce((a, e) => {
-                a[e] = input[this.inputMap[e]];
+				let val = input[this.inputMap[e]];
+				if (val !== undefined)
+					a[e] = val
                 return a;
             }, {});
             return o;
@@ -291,7 +303,9 @@ const types = {
         },
         create: function(input, output, customer) {
             var o = Object.keys(this.inputMap).reduce((a, e) => {
-                a[e] = input[this.inputMap[e]];
+				let val = input[this.inputMap[e]];
+				if (val !== undefined)
+					a[e] = val
                 return a;
             }, {});
             return o;
@@ -954,6 +968,8 @@ function checkOrder(order) {
 
 module.exports = {
     exists,
+	// top level types
+	types,
     // functions for objects
     getCustomer,
     getRMA,
