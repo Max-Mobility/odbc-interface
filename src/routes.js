@@ -540,6 +540,7 @@ router.post('/print_rma', [
     var order = null;
     var rma = null;
 	var job = null;
+	var progRec = null;
 
     return db.getRMA(input.RmaNumber).then((r) => {
         // PULL OUT DATA
@@ -553,6 +554,7 @@ router.post('/print_rma', [
         }
     }).then((o) => {
         order = o;
+		// now get the job
         if (rma && rma["Job"]) {
             return db.getJob(rma['Job']);
         } else {
@@ -562,14 +564,19 @@ router.post('/print_rma', [
         }
     }).then((j) => {
         job = j;
+		// now get the parts
 		return db.getParts(rma['Job']);
 	}).then((parts) => {
 		job.Parts = parts;
 		let orderPart = db.types.Part.create(order);
 		if (!_.isEmpty(orderPart)) {
-			console.log(JSON.stringify(orderPart, null, 2));
 			job.Parts.push(orderPart);
 		}
+		// now get programming record
+		return db.getProgrammingRecord(rma['Serial Number']);
+    }).then((pr) => {
+		progRec = pr;
+		// now render it
 		context.layout = false; // don't render within layout.ejs
         context.order = order;
         context.rma = rma;

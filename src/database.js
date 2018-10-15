@@ -188,6 +188,7 @@ const types = {
 			'Ship Quantity': "MShipQty",
             'Serialised?': "SerialisedFlag",
             'Jobs Exist?': "JobsExistFlag",
+			'Date Last Inventory Part': "DateLastInvPart",
         },
         create: function(input, customer) {
             /*
@@ -229,6 +230,7 @@ const types = {
 			"Sales Order": 'RecSalesOrder',
             "Entry Date": 'EntryDate',
 			"Job": 'Job',
+			"Received Date": 'ReceivedDate',
             "Last Transaction Date": 'LastTranactDate',
             "Special Instructions": 'SpecialInstrs',
             "Service Ticket": 'ServiceTicket',
@@ -253,6 +255,31 @@ const types = {
 		inputMap: {
 			"Job": "Job",
 			"Complete": "Complete",
+			"Actual Completion Date": "ActCompleteDate",
+		},
+		create: function(input) {
+            var o = Object.keys(this.inputMap).reduce((a, e) => {
+				let val = input[this.inputMap[e]];
+				if (val !== undefined)
+					a[e] = val
+                return a;
+            }, {});
+            return o;
+        }
+	},
+	"ProgrammingRecord": {
+		field: "SerialNumber",
+		tables: [
+			"ProgrammingRecords",
+		],
+		inputMap: {
+			"Serial Number": "SerialNumber",
+			"Date Programmed": "DatePerformed",
+			"Circuit Board Revision": "CircuitBoardRev",
+			"MCU Firmware Version": "FirmwareVersion",
+			"BLE Firmware Version": "BluetoothFirmwareVersion",
+			"Performed By": "PerformedBy",
+			"ID": "ID",
 		},
 		create: function(input) {
             var o = Object.keys(this.inputMap).reduce((a, e) => {
@@ -314,8 +341,8 @@ const types = {
             "InvSerialTrn",
         ],
         inputMap: {
-            'Customer Number': "Customer",
             'Serial Number': 'Serial',
+            'Customer Number': "Customer",
             'Sales Order Number': 'SalesOrder',
             'Invoice Number': 'Invoice',
             'Description': 'SerialDescription',
@@ -472,6 +499,39 @@ function getJob(job_number) {
         return types.Job.create(obj);
     }).catch((err) => {
         console.log(`cannot get job: ${err}`);
+    });
+};
+
+function getProgrammingRecord(serial_number) {
+    // Loop through our tables
+    var tasks = types.ProgrammingRecord.tables.map((t) => {
+        var lu = {
+			db: progRecDB,
+            table: t,
+            queries: [
+                {
+                    operator: 'LIKE',
+                    column: 'SerialNumber',
+                    pattern: `%${serial_number}%`
+                }
+            ]
+        };
+        return lookup(lu);
+    });
+    return Promise.all(tasks).then((dataArray) => {
+        return dataArray.reduce((a, e) => {
+            var output = a;
+            if (e.length) {
+                e.map((o) => {
+                    output = mergeObjects(output, o);
+                });
+            }
+            return output;
+        }, {});
+    }).then((obj) => {
+        return types.ProgrammingRecord.create(obj);
+    }).catch((err) => {
+        console.log(`cannot get programming record: ${err}`);
     });
 };
 
@@ -843,15 +903,24 @@ const tables = {
 var odbc = require('odbc')
 , conn_str = "DSN=MySQLServerDatabase;"
 , cn = conn_str + process.env.ODBC_CONNECTION_STRING
+, progRecCN = conn_str + process.env.ODBC_CONNECTION_STRING_PROG_REC
 ;
 var db = null;
+var progRecDB = null;
 const open = () => {
     db = new odbc.Database();
     db.open(cn, function (err) {
         if (err) return console.log(err);
 
-        console.log(`Connected: ${db.connected}`);
+        console.log(`db Connected: ${db.connected}`);
     });
+
+	progRecDB = new odbc.Database();
+	progRecDB.open(progRecCN, function (err) {
+        if (err) return console.log(err);
+
+        console.log(`progRecDB Connected: ${progRecDB.connected}`);
+	});
 };
 open();
 
@@ -889,7 +958,9 @@ function lookup(opts) {
         query += ';';
         console.log(query);
 
-        db.query(query, (err, data) => {
+		let _db = opts.db || db;
+
+        _db.query(query, (err, data) => {
             if (err) {
                 console.log('Query Error!');
                 console.log(Object.keys(err));
@@ -996,6 +1067,7 @@ module.exports = {
     getCustomer,
     getRMA,
 	getJob,
+	getProgrammingRecord,
 	getParts,
     getDevice,
     getOrder,
