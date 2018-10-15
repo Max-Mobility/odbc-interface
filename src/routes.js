@@ -268,8 +268,8 @@ router.post('/check_rma', [
 			status = 'Packaging';
 		} else if (progRec['Date Programmed'] && progRec['Date Programmed'].length) {
 			status = 'Testing';
-		} else if (rma['Status']) {
-			status = 'Processing';
+		} else if (rma['Status'] == 9) {
+			status = 'Processing / Repairing';
 		} else {
 			status = 'Awaiting Delivery';
 		}
