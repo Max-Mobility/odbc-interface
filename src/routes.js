@@ -107,6 +107,12 @@ router.get('/', (req, res) => {
 				{
 					operator: 'LIKE',
 					column: 'MStockCode',
+					pattern: 'MX2-175',
+					invert: true
+				},
+				{
+					operator: 'LIKE',
+					column: 'MStockCode',
 					pattern: 'MX2-1%',
 				}
 			]
