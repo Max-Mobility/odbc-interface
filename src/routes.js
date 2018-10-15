@@ -89,7 +89,6 @@ router.get('/', (req, res) => {
     db.lookup(lu).then((data) => {
 		// look into sordetail to make sure they are LIKE MX2-1
 		var dataStr = data.map(d => `'${d["SalesOrder"]}'`).join(', ');
-		console.log(dataStr);
 		var lu2 = {
 			table: 'SorDetail',
 			top: 10,
@@ -113,14 +112,16 @@ router.get('/', (req, res) => {
 			]
 		};
 		return db.lookup(lu2).then((d2) => {
-			console.log('data', data.length);
-			console.log('d2', d2.length);
 			let validOrders = _.uniq(d2.map(d => d['SalesOrder']));
 			let stockCodes = _.uniq(d2.map(d => d['MStockCode']));
+			/*
+			console.log('data', data.length);
+			console.log('d2', d2.length);
 			console.log('valid orders', validOrders.length);
 			console.log('valid orders', validOrders);
 			console.log('stock codes', stockCodes.length);
 			console.log('stock codes', stockCodes);
+			*/
 			return data.filter((d) => {
 				return validOrders.indexOf(d['SalesOrder']) > -1;
 			});
