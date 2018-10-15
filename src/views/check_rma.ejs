@@ -35,25 +35,28 @@
 <% if (data.rma_number) { %>
 <div class="rmas col" style="width: 100%">
 <h4>Search result for RMA <font color="blue"><%= data.rma_number %></font>:</h4>
-<% if (items) { items.map((i) => { %>
-<% if (i["RMA Number"] !== null && i["RMA Number"] !== undefined) { %>
-<details open><summary>RMA: <%= i["RMA Number"] %></summary>
+
+<% if (rma) { %>
+<details><summary><%- rma["__DISPLAY__"] %></summary>
 <div class="property-list">
-<% Object.keys(i).filter(k => k[0] != '_').sort().map((k) => { %>
+<% Object.keys(rma).filter(k => k[0] != '_').map((k) => { %>
 <hr/>
-<% if (i[k] !== null && i[k] !== undefined) { %>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>
-<div class="property-value"><pre><%= i[k] %></pre></div>
-</div>
+
+<% if (k === 'Tracking Number') { %>
+<div class="property-value"><pre><a href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= rma[k] %>"><%= rma[k] %></a></pre></div>
+<% } else { %>
+<div class="property-value"><pre><%= rma[k] %></pre></div>
 <% } %>
+</div>
 <% }) %>
 </div>
 </details>
+
 <% } else { %>
 <h4>Couldn't find RMA <font color="red"><%= data.rma_number %></font></h4>
 <% } %>
-<% })} %>
 </div>
 <% } %>
 

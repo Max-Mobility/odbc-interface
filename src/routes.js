@@ -192,29 +192,103 @@ router.post('/check_rma', [
         return res.render('check_rma', Object.assign(templateContext(), {
             data: req.body,
             errors: errors.mapped(),
-            items: [],
+			rma: null,
             csrfToken: req.csrfToken()
         }));
     }
 
-    const data = matchedData(req);
+    const fields = Object.keys(db.fieldMap);
+    const input = Object.keys(req.body).reduce((a, e) => {
+        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
+            a[db.fieldMap[e]] = req.body[e];
+        }
+        return a;
+    }, {});
 
     var context = Object.assign(templateContext(), {
         data: req.body,
+		rma: null,
         errors: {},
-        items: [],
         csrfToken: req.csrfToken()
     });
-    db.getRMA(data.rma_number).then((rma) => {
+
+    const data = matchedData(req)
+
+    var order = null;
+    var rma = null;
+	var job = null;
+	var progRec = null;
+
+	// order status = shipped
+	// rma status = processed
+	// programmed = testing
+	// job = packaging
+	let rmaNumber = data.rma_number;
+
+    return db.getRMA(rmaNumber).then((r) => {
+        // PULL OUT DATA
+		rma = r;
+        if (rma && rma["Sales Order"]) {
+            return db.getOrder(rma['Sales Order']);
+        } else {
+            throw ({
+                message: 'Could not find by rma number: ' + rmaNumber
+            });
+        }
+    }).then((o) => {
+        order = o;
+		// now get the job
+        if (rma && rma["Job"]) {
+            return db.getJob(rma['Job']);
+        } else {
+            throw ({
+                message: 'Could not find job for rma: ' + rmaNumber
+            });
+        }
+    }).then((j) => {
+        job = j;
+		// now get the parts
+		return db.getParts(rma['Job']);
+	}).then((parts) => {
+		job.Parts = parts;
+		let orderPart = db.types.Part.create(order);
+		if (!_.isEmpty(orderPart)) {
+			job.Parts.push(orderPart);
+		}
+		// now get programming record
+		return db.getProgrammingRecord(rma['Serial Number']);
+    }).then((pr) => {
+		progRec = pr;
+		// display based on order / rma / programmed / job
+		let status = `${rma['Status']} - ${order['Status']} - ${progRec['Date Programmed']} - ${job['Complete']}`;
+		status = '';
+		if (order['Status'] == 9) {
+			status = 'Shipped';
+		} else if (job['Complete'] == 'Y') {
+			status = 'Packaging';
+		} else if (progRec['Date Programmed'] && progRec['Date Programmed'].length) {
+			status = 'Testing';
+		} else if (rma['Status']) {
+			status = 'Processing';
+		} else {
+			status = 'Awaiting Delivery';
+		}
+		/*
+		`<font color=\"blue\">${mf}</font>` :
+			"<font color=\"gray\">No Mark For</font>";
+		*/
+		rma['__DISPLAY__'] = `<span>RMA: ${parseInt(rma["RMA Number"])}: ${status}</span>`;
+        context.rma = rma;
+		// now render it
         console.log('rendering data!');
-        context.items = [rma];
-        res.render('check_rma', context);
+        return res.render('check_rma', context);
     }).catch((err) => {
+        // got an error - render it!
         console.log('caught error!');
         context.errors.server = {
             msg: err.message
         }
-        res.render('check_rma', context);
+        return res.render('check_rma', context);
     });
 })
 
@@ -513,6 +587,10 @@ router.get('/print_rma', (req, res) => {
 });
 
 router.post('/print_rma', [
+    check('RMA Number')
+        .isLength({ min: 1 })
+        .withMessage('RMA is required')
+        .trim()
 ], (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
