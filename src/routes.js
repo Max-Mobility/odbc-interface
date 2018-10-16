@@ -297,10 +297,11 @@ router.post('/check_rma', [
 		// now get the parts
 		return db.getParts(rma['Job']);
 	}).then((parts) => {
-		job.Parts = parts;
-		let orderPart = db.types.Part.create(order);
-		if (!_.isEmpty(orderPart)) {
-			job.Parts.push(orderPart);
+		let orderParts = db.types.Part.partsFromOrder(order);
+		if (orderParts.length) {
+			job.Parts = _.uniq(_.flatten(_.union(parts, orderParts)), false, _.iteratee('Stock Code'));
+		} else {
+			job.Parts = parts;
 		}
 		// now get programming record
 		return db.getProgrammingRecord(rma['Serial Number']);
@@ -738,10 +739,11 @@ router.post('/print_rma', [
 		// now get the parts
 		return db.getParts(rma['Job']);
 	}).then((parts) => {
-		job.Parts = parts;
-		let orderPart = db.types.Part.create(order);
-		if (!_.isEmpty(orderPart)) {
-			job.Parts.push(orderPart);
+		let orderParts = db.types.Part.partsFromOrder(order);
+		if (orderParts.length) {
+			job.Parts = _.uniq(_.flatten(_.union(parts, orderParts)), false, _.iteratee('Stock Code'));
+		} else {
+			job.Parts = parts;
 		}
 		// now get programming record
 		return db.getProgrammingRecord(rma['Serial Number']);

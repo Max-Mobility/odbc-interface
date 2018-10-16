@@ -82,6 +82,7 @@ function makeQueries(table, data) {
 
 function combineShipping(input) {
     return [
+		input.CustomerName,
         input.ShipAddress1,
         input.ShipAddress2,
         input.ShipAddress3,
@@ -100,14 +101,14 @@ const exists = (_i) => {
 	}
 };
 
+let mergedValues = ['MStockCode', 'MStockDes', 'MOrderQty', 'MShipQty'];
 const mergeObjects = (output, a, b) => {
     Object.keys(a).map((k) => {
         var v = a[k];
         var o = output[k];
-        if (v && v.length && o && o.length && o.length > v.length) {
-            // do nothing
-        } else if (o && v && o > v) {
-            // do nothing
+        if (o !== undefined && mergedValues.indexOf(k) > -1) {
+			// if we're getting strings or arrays, turn them into a list of objects
+			output[k] = _.flatten(_.union([v], [o]));
         } else {
             output[k] = v;
         }
@@ -116,10 +117,9 @@ const mergeObjects = (output, a, b) => {
         Object.keys(b).map((k) => {
             var v = b[k];
             var o = output[k];
-            if (v && v.length && o && o.length && o.length > v.length) {
-                // do nothing
-            } else if (o && v && o > v) {
-                // do nothing
+			if (o !== undefined && mergedValues.indexOf(k) > -1) {
+				// if we're getting strings or arrays, turn them into a list of objects
+				output[k] = _.flatten(_.union([v], [o]));
             } else {
                 output[k] = v;
             }
@@ -203,11 +203,14 @@ const types = {
 					a[e] = val
                 return a;
             }, {});
+			// update shipping
             o["Shipping Address"] = combineShipping(input);
+			// update display
 			var mf = o["Mark For"];
 			mf = exists(mf) ? `<font color=\"blue\">${mf}</font>` :
 				"<font color=\"gray\">No Mark For</font>";
 			o["__DISPLAY__"] = `<span>Order: ${parseInt(o["Order Number"])}: ${mf}</span>`;
+			// update stock codes and such
             return o;
         }
     },
@@ -318,6 +321,23 @@ const types = {
 			"MX2SD-P090": { "Stock Code": "MX2-902", "Description": "DRIVE UNIT CIRCUIT BOARD" },
 			"SSLC258V29": { "Stock Code": "MX1-038", "Description": "MX1 BATTERY CHARGER" },
 		},
+		partsFromOrder: function(order) {
+			let inputs = [];
+			for (let i=0; i<order['Stock Code'].length; i++) {
+				let num = (i < order['Ship Quantity'].length) ? order['Ship Quantity'][i] : 1;
+				if (num > 0) {
+					inputs.push({
+						'MStockCode': order['Stock Code'][i],
+						'MDescription': order['Stock Description'][i],
+						'MQtyIssued': num
+					});
+				}
+			}
+			if (inputs.length)
+				return inputs.map((i) => { return this.create(i); });
+			else
+				return [];
+		},
 		create: function(input) {
             var o = Object.keys(this.inputMap).reduce((a, e) => {
 				let val = input[this.inputMap[e]];
@@ -378,15 +398,7 @@ function getCustomer(customer_number) {
         return lookup(lu);
     });
     return Promise.all(tasks).then((dataArray) => {
-        return dataArray.reduce((a, e) => {
-            var output = a;
-            if (e.length) {
-                e.map((o) => {
-                    output = mergeObjects(output, o);
-                });
-            }
-            return output;
-        }, {});
+        return _.flatten(dataArray).reduce(mergeObjects, {});
     }).then((obj) => {
         return types.Customer.create(obj);
     }).catch((err) => {
@@ -430,15 +442,7 @@ function getRMA(rma_number) {
         return lookup(lu);
     });
     return Promise.all(tasks).then((dataArray) => {
-        return dataArray.reduce((a, e) => {
-            var output = a;
-            if (e.length) {
-                e.map((o) => {
-                    output = mergeObjects(output, o);
-                });
-            }
-            return output;
-        }, {});
+        return _.flatten(dataArray).reduce(mergeObjects, {});
     }).then((obj) => {
         return types.RMA.create(obj);
     }).catch((err) => {
@@ -486,15 +490,7 @@ function getJob(job_number) {
         return lookup(lu);
     });
     return Promise.all(tasks).then((dataArray) => {
-        return dataArray.reduce((a, e) => {
-            var output = a;
-            if (e.length) {
-                e.map((o) => {
-                    output = mergeObjects(output, o);
-                });
-            }
-            return output;
-        }, {});
+        return _.flatten(dataArray).reduce(mergeObjects, {});
     }).then((obj) => {
         return types.Job.create(obj);
     }).catch((err) => {
@@ -519,15 +515,7 @@ function getProgrammingRecord(serial_number) {
         return lookup(lu);
     });
     return Promise.all(tasks).then((dataArray) => {
-        return dataArray.reduce((a, e) => {
-            var output = a;
-            if (e.length) {
-                e.map((o) => {
-                    output = mergeObjects(output, o);
-                });
-            }
-            return output;
-        }, {});
+        return _.flatten(dataArray).reduce(mergeObjects, {});
     }).then((obj) => {
         return types.ProgrammingRecord.create(obj);
     }).catch((err) => {
@@ -571,15 +559,7 @@ function getDevice(serial_number) {
         return lookup(lu);
     });
     return Promise.all(tasks).then((dataArray) => {
-        return dataArray.reduce((a, e) => {
-            var output = a;
-            if (e.length) {
-                e.map((o) => {
-                    output = mergeObjects(output, o);
-                });
-            }
-            return output;
-        }, {});
+        return _.flatten(dataArray).reduce(mergeObjects, {});
     }).then((obj) => {
         return types.Device.create(obj);
     }).catch((err) => {
@@ -623,15 +603,7 @@ function getOrder(order_number) {
         return lookup(lu);
     })
     return Promise.all(tasks).then((dataArray) => {
-        return dataArray.reduce((a, e) => {
-            var output = a;
-            if (e.length) {
-                e.map((o) => {
-                    output = mergeObjects(output, o);
-                });
-            }
-            return output;
-        }, {});
+        return _.flatten(dataArray).reduce(mergeObjects, {});
     }).then((obj) => {
         return types.Order.create(obj);
     }).catch((err) => {
