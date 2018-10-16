@@ -309,22 +309,68 @@ router.post('/check_rma', [
 		// display based on order / rma / programmed / job
 		let status = `${rma['Status']} - ${order['Status']} - ${progRec['Date Programmed']} - ${job['Complete']}`;
 		status = '';
+		let shipDate = '';
 		if (order['Status'] == 9) {
 			status = 'Shipped';
+			shipDate = moment(order['Actual Ship Date']).calendar(null,{
+				lastDay : '[Yesterday]',
+				sameDay : '[Today]',
+				nextDay : '[Tomorrow]',
+				lastWeek : '[last] dddd',
+				nextWeek : 'dddd',
+				sameElse : 'L'
+			});
+		} else if (order['Status'] == 'S') {
+			status = 'Awaiting PO';
 		} else if (job['Complete'] == 'Y') {
 			status = 'Packaging';
+			shipDate = moment().add(1, 'days').calendar(null,{
+				lastDay : '[Yesterday]',
+				sameDay : '[Today]',
+				nextDay : '[Tomorrow]',
+				lastWeek : '[last] dddd',
+				nextWeek : 'dddd',
+				sameElse : 'L'
+			});
 		} else if (progRec['Date Programmed'] && progRec['Date Programmed'].length) {
 			status = 'Testing';
+			shipDate = moment().add(2, 'days').calendar(null,{
+				lastDay : '[Yesterday]',
+				sameDay : '[Today]',
+				nextDay : '[Tomorrow]',
+				lastWeek : '[last] dddd',
+				nextWeek : 'dddd',
+				sameElse : 'L'
+			});
 		} else if (rma['Status'] == 9) {
 			status = 'Processing / Repairing';
+			shipDate = moment().add(3, 'days').calendar(null,{
+				lastDay : '[Yesterday]',
+				sameDay : '[Today]',
+				nextDay : '[Tomorrow]',
+				lastWeek : '[last] dddd',
+				nextWeek : 'dddd',
+				sameElse : 'L'
+			});
 		} else {
 			status = 'Awaiting Delivery';
 		}
+		// show latest ship date
+		// - processing / repairing = 3 DAYS (latest ship date)
+		//  - testing = DAY AFTER TOMORROW
+		//  - Packaging = TOMORROW
+		//  - Shipped = order['Actual Ship Date']
 		/*
 		`<font color=\"blue\">${mf}</font>` :
 			"<font color=\"gray\">No Mark For</font>";
 		*/
-		rma['__DISPLAY__'] = `<span>RMA: ${parseInt(rma["RMA Number"])}: ${status}</span>`;
+		rma['__DISPLAY__'] = `<div style=\"display: grid;\"><span>RMA: <font color=\"blue\">${parseInt(rma["RMA Number"])}</font><br></span><span>Status: <font color=\"blue\">${status}</font>`;
+		if (shipDate.length && status == 'Shipped') {
+			rma['__DISPLAY__'] += `<br></span><span>Shipped: <font color=\"blue\">${shipDate}</font></span>`;
+		} else if (shipDate.length) {
+			rma['__DISPLAY__'] += `<br></span><span>Expected Ship Date: <font color=\"blue\">${shipDate}</font></span>`;
+		}
+		rma['__DISPLAY__'] += `</div>`;
         context.rma = rma;
 		// now render it
         console.log('rendering data!');
