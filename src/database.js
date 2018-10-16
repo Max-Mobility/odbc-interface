@@ -109,9 +109,11 @@ const mergeObjects = (output, a, b) => {
         if (o !== undefined && mergedValues.indexOf(k) > -1) {
 			// if we're getting strings or arrays, turn them into a list of objects
 			output[k] = _.flatten(_.union([v], [o]));
+        } else if (mergedValues.indexOf(k) > -1) {
+            output[k] = [v];
         } else {
-            output[k] = v;
-        }
+			output[k] = v;
+		}
     });
     if (b) {
         Object.keys(b).map((k) => {
@@ -120,6 +122,8 @@ const mergeObjects = (output, a, b) => {
 			if (o !== undefined && mergedValues.indexOf(k) > -1) {
 				// if we're getting strings or arrays, turn them into a list of objects
 				output[k] = _.flatten(_.union([v], [o]));
+			} else if (mergedValues.indexOf(k) > -1) {
+				output[k] = [v];
             } else {
                 output[k] = v;
             }
