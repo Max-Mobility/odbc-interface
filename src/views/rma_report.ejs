@@ -108,11 +108,13 @@
 			  </span>
 			</td>
 		  </tr>
+		  <% if (order !== null) { %>
 		  <tr>
 			<td style="text-align: left;">
 			  TRACKING NUMBER: <a href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= order["Tracking Number"] %>"><%= order["Tracking Number"] %></a>
 			</td>
 		  </tr>
+		  <% } %>
 	  </tbody></table><table style="width: 100%;">
 		<tbody>
 		  <tr>
@@ -124,13 +126,16 @@
 		  <tr>
 			<td><%- rma["Email"] %></td>
 			<td><%- rma["Attention"] %></td>
+			<% if (order !== null) { %>
 			<td><%- order["Shipping Instructions"] %></td>
 			<td><%- order["PO Number"] %></td>
+			<% } %>
 		  </tr>
 		</tbody>
 	  </table>
 	  <table style="width: 100%;">
 		<tbody>
+		  <% if (job !== null) { %>
 		  <tr>
 			<td class="table-header" style="width: 10%;">Quantity</td>
 			<td class="table-header" style="width: 30%;">Item Code</td>
@@ -142,6 +147,7 @@
 			<td><%- part["Stock Code"] %></td>
 			<td><%- part["Description"] %></td>
 		  </tr>
+		  <% } %>
 		  <% } %>
 		</tbody>
 	  </table>

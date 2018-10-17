@@ -275,43 +275,59 @@ router.post('/check_rma', [
     return db.getRMA(rmaNumber).then((r) => {
         // PULL OUT DATA
 		rma = r;
-        if (rma && rma["Sales Order"]) {
+        if (rma && db.exists(rma["Sales Order"])) {
             return db.getOrder(rma['Sales Order']);
+        } else if (db.exists(rma["RMA Number"])) {
+			return null;
         } else {
-            throw ({
-                message: 'Could not find by rma number: ' + rmaNumber
-            });
-        }
+			throw ({
+				message: "Couldn't find RMA " + rmaNumber
+			});
+		}
     }).then((o) => {
         order = o;
 		// now get the job
-        if (rma && rma["Job"]) {
+        if (rma && db.exists(rma["Job"])) {
             return db.getJob(rma['Job']);
+        } else if (rma) {
+			return null;
         } else {
-            throw ({
-                message: 'Could not find job for rma: ' + rmaNumber
-            });
-        }
+			throw ({
+				message: "Couldn't find RMA " + rmaNumber
+			});
+		}
     }).then((j) => {
         job = j;
 		// now get the parts
-		return db.getParts(rma['Job']);
-	}).then((parts) => {
-		let orderParts = db.types.Part.partsFromOrder(order);
-		if (orderParts.length) {
-			job.Parts = _.uniq(_.flatten(_.union(parts, orderParts)), false, _.iteratee('Stock Code'));
+		if (job !== null) {
+			return db.getParts(rma['Job']);
 		} else {
-			job.Parts = parts;
+			return null;
+		}
+	}).then((parts) => {
+		let orderParts = [];
+		if (job !== null) {
+			if (order !== null) {
+				orderParts = db.types.Part.partsFromOrder(order);
+			}
+			if (orderParts.length) {
+				job.Parts = _.uniq(_.flatten(_.union(parts, orderParts)), false, _.iteratee('Stock Code'));
+			} else {
+				job.Parts = parts;
+			}
 		}
 		// now get programming record
-		return db.getProgrammingRecord(rma['Serial Number']);
+		if (rma && db.exists(rma['Serial Number'])) {
+			return db.getProgrammingRecord(rma['Serial Number']);
+		} else {
+			return null;
+		}
     }).then((pr) => {
 		progRec = pr;
 		// display based on order / rma / programmed / job
-		let status = `${rma['Status']} - ${order['Status']} - ${progRec['Date Programmed']} - ${job['Complete']}`;
-		status = '';
+		let status = '';
 		let shipDate = '';
-		if (order['Status'] == 9) {
+		if (order && order['Status'] == 9) {
 			status = 'Shipped';
 			shipDate = moment(order['Actual Ship Date']).calendar(null,{
 				lastDay : '[Yesterday]',
@@ -321,9 +337,9 @@ router.post('/check_rma', [
 				nextWeek : 'dddd',
 				sameElse : 'L'
 			});
-		} else if (order['Status'] == 'S') {
+		} else if (order && order['Status'] == 'S') {
 			status = 'Awaiting PO';
-		} else if (job['Complete'] == 'Y') {
+		} else if (job && job['Complete'] == 'Y') {
 			status = 'Packaging';
 			shipDate = moment().add(1, 'days').calendar(null,{
 				lastDay : '[Yesterday]',
@@ -333,7 +349,7 @@ router.post('/check_rma', [
 				nextWeek : 'dddd',
 				sameElse : 'L'
 			});
-		} else if (progRec['Date Programmed'] && progRec['Date Programmed'].length) {
+		} else if (progRec && progRec['Date Programmed'] && progRec['Date Programmed'].length) {
 			status = 'Testing';
 			shipDate = moment().add(2, 'days').calendar(null,{
 				lastDay : '[Yesterday]',
@@ -343,7 +359,7 @@ router.post('/check_rma', [
 				nextWeek : 'dddd',
 				sameElse : 'L'
 			});
-		} else if (rma['Status'] == 9) {
+		} else if (rma && rma['Status'] == 9) {
 			status = 'Processing / Repairing';
 			shipDate = moment().add(3, 'days').calendar(null,{
 				lastDay : '[Yesterday]',
@@ -361,10 +377,7 @@ router.post('/check_rma', [
 		//  - testing = DAY AFTER TOMORROW
 		//  - Packaging = TOMORROW
 		//  - Shipped = order['Actual Ship Date']
-		/*
-		`<font color=\"blue\">${mf}</font>` :
-			"<font color=\"gray\">No Mark For</font>";
-		*/
+
 		rma['__DISPLAY__'] = `<div style=\"display: grid;\"><span>RMA: <font color=\"blue\">${parseInt(rma["RMA Number"])}</font><br></span><span>Status: <font color=\"blue\">${status}</font>`;
 		if (shipDate.length && status == 'Shipped') {
 			rma['__DISPLAY__'] += `<br></span><span>Shipped: <font color=\"blue\">${shipDate}</font></span>`;
@@ -638,16 +651,13 @@ router.post('/search_by_rma', [
     return db.getRMA(input.RmaNumber).then((rma) => {
         // PULL OUT DATA
         rmas = [rma];
-        if (rma && rma["Sales Order"]) {
+        if (rma && db.exists(rma["Sales Order"])) {
             return db.getOrder(rma['Sales Order']);
         } else {
-            throw ({
-                message: 'Could not find by rma number: ' + input.RmaNumber
-            });
+			return null;
         }
     }).then((o) => {
         orders = [o];
-        //rmas = db.getRMAs(customer.Number);
         if (db.exists(rmas[0]['Serial Number'])) {
             return db.getDevice(rmas[0]['Serial Number']);
         } else {
@@ -663,7 +673,7 @@ router.post('/search_by_rma', [
         res.render('search_by_rma', context);
     }).catch((err) => {
         // got an error - render it!
-        console.log('caught error!');
+        console.log('caught error!', err);
         context.errors.server = {
             msg: err.message
         }
@@ -717,36 +727,49 @@ router.post('/print_rma', [
     return db.getRMA(input.RmaNumber).then((r) => {
         // PULL OUT DATA
 		rma = r;
-        if (rma && rma["Sales Order"]) {
+        if (rma && db.exists(rma["Sales Order"])) {
             return db.getOrder(rma['Sales Order']);
+        } else if (db.exists(rma["RMA Number"])) {
+			return null;
         } else {
-            throw ({
-                message: 'Could not find by rma number: ' + input.RmaNumber
-            });
-        }
+			throw ({
+				message: "Couldn't find RMA " + input.RmaNumber
+			});
+		}
     }).then((o) => {
         order = o;
 		// now get the job
-        if (rma && rma["Job"]) {
+        if (rma && db.exists(rma["Job"])) {
             return db.getJob(rma['Job']);
         } else {
-            throw ({
-                message: 'Could not find job for rma: ' + input.RmaNumber
-            });
+			return null;
         }
     }).then((j) => {
         job = j;
 		// now get the parts
-		return db.getParts(rma['Job']);
-	}).then((parts) => {
-		let orderParts = db.types.Part.partsFromOrder(order);
-		if (orderParts.length) {
-			job.Parts = _.uniq(_.flatten(_.union(parts, orderParts)), false, _.iteratee('Stock Code'));
+		if (job !== null) {
+			return db.getParts(rma['Job']);
 		} else {
-			job.Parts = parts;
+			return null;
+		}
+	}).then((parts) => {
+		if (parts !== null) {
+			let orderParts = [];
+			if (order !== null) {
+				orderParts = db.types.Part.partsFromOrder(order);
+			}
+			if (orderParts.length) {
+				job.Parts = _.uniq(_.flatten(_.union(parts, orderParts)), false, _.iteratee('Stock Code'));
+			} else {
+				job.Parts = parts;
+			}
 		}
 		// now get programming record
-		return db.getProgrammingRecord(rma['Serial Number']);
+		if (db.exists(rma['Serial Number'])) {
+			return db.getProgrammingRecord(rma['Serial Number']);
+		} else {
+			return null;
+		}
     }).then((pr) => {
 		progRec = pr;
 		// now render it
@@ -759,7 +782,7 @@ router.post('/print_rma', [
         return res.render('rma_report', context);
     }).catch((err) => {
         // got an error - render it!
-        console.log('caught error!');
+        console.log('caught error!', err);
         context.errors.server = {
             msg: err.message
         }
