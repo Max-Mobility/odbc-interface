@@ -341,7 +341,7 @@ router.post('/search', [
             items: [],
             errors: {
 				input: {
-					msg: 'You can only search by either order info, serial number, or rma number!'
+					msg: 'You can only search by ONE OF order info, OR serial number, OR rma number!'
 				}
 			},
             csrfToken: req.csrfToken()
@@ -418,6 +418,22 @@ router.post('/search', [
 	} else if (hasRmaQuery) {
 		// if we get RMA
 		// - search for device, order
+		return getRMA(rmaNumber).then((r) => {
+			// combine all the info for display
+			rmaDisplay(r);
+			// now pull the rma out
+			var rma = r.rma;
+			context.result = [rma];
+			// now render it
+			return res.render('search', context);
+		}).catch((err) => {
+			// got an error - render it!
+			console.log('caught error!');
+			context.errors.server = {
+				msg: err.message
+			}
+			return res.render('search', context);
+		});
 	}
 })
 

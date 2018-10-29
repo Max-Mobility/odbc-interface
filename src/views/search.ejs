@@ -34,14 +34,6 @@
 
 <div class="results" style="width: 50%">
 
-<div class="customer-info">
-<% if (!result || result.length === 0) { %>
-<% Object.keys(data).filter(k => k !== '_csrf').map((k) => { var d = data[k]; if (d) { %>
-<h3><font color="Red">Couldn't find data by '<%= d %>'</font></h3>
-<% }}) %>
-<% } %>
-</div>
-
 <div class="orders col" style="width: 100%">
 <h4>Search result for<br>
 <% Object.keys(data).filter(k => k !== '_csrf').map((k) => { var d = data[k]; if (d) { %>
