@@ -398,10 +398,7 @@ router.post('/search', [
 				}
 			}
 			if (db.exists(device["Sales Order Number"])) {
-				return db.getRMABySerial(serial).then((rmas) => {
-					console.log(rmas);
-					return db.getOrder(device["Sales Order Number"]);
-				});
+				return db.getOrder(device["Sales Order Number"]);
 			} else {
 				return null;
 			}
@@ -419,14 +416,16 @@ router.post('/search', [
 				rmaDisplay(rmaRecord);
 				rma = rmaRecord.rma;
 			}
-			if (order) {
-				context.result = [order];
-			} else if (rma) {
-				context.result = [rma];
-			} else {
+			if (!order && !rma) {
 				throw {
 					message: `Could not find sales order or RMA associated with S/N: ${serial}`
 				}
+			}
+			if (order) {
+				context.result = [order];
+			}
+			if (rma) {
+				context.result.push(rma);
 			}
 			return res.render('search', context);
 		}).catch((err) => {
