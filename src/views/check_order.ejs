@@ -59,6 +59,8 @@
 <div class="property-label"><b><%= k %></b>: </div>
 <% if (k === 'Tracking Number') { %>
 <div class="property-value"><pre><a href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= result[k] %>"><%= result[k] %></a></pre></div>
+<% } else if (Array.isArray(result[k])) { %>
+<div class="property-value"><pre><%= result[k].join('\n') %></pre></div>
 <% } else { %>
 <div class="property-value"><pre><%= result[k] %></pre></div>
 <% } %>

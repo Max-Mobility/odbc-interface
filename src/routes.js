@@ -105,7 +105,7 @@ function rmaDisplay(rmaRecord) {
 	} else if (shipDate.length) {
 		rma['__DISPLAY__'] += `<br></span><span>Expected Ship Date: <font color=\"blue\">${shipDate}</font>`;
 	}
-	if (order && order['Tracking Number']) {
+	if (order && db.exists(order['Tracking Number'])) {
 		rma['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${order['Tracking Number']}">${order['Tracking Number']}</a></span>`;
 	}
 	rma['__DISPLAY__'] += `</span></div>`;
@@ -421,8 +421,9 @@ router.post('/search', [
 					message: `Could not find sales order or RMA associated with S/N: ${serial}`
 				}
 			}
+			context.result = [];
 			if (order) {
-				context.result = [order];
+				context.result.push(order);
 			}
 			if (rma) {
 				context.result.push(rma);
