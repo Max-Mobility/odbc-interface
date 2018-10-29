@@ -368,7 +368,7 @@ router.post('/search', [
 		return getOrders(orderNumber, poNumber, markFor).then((orders) => {
 			if (orders.length > 1) {
 				context.errors.result = {
-					msg: `Found ${orders.length} orders - only showing the first!`
+					msg: `Found ${orders.length} orders - not searching for other information; please refine your search to see device / rma information!`
 				};
 			}
 			else if (orders.length === 0) {
@@ -390,17 +390,29 @@ router.post('/search', [
 	// if we get SerialNumber
 	// - search for invoice, order, rma
 	// - other device
-		return db.getDevice(input.Serial).then((device) => {
-			// PULL OUT DATA
-			devices = [device];
-			var orderNumbers = devices.map(d => d['Sales Order Number']);
-			orderNumbers = _.uniq(orderNumbers).filter(i => db.exists(i));
-			return orderNumbers.map(o => db.getOrder(o));
-		}).then((orders) => {
+		return db.getDevice(serial).then((device) => {
+			if (!device) {
+				throw {
+					message: `Could not find device with S/N: ${serial}`
+				}
+			}
+			if (db.exists(device["Sales Order Number"])) {
+				return db.getOrder(device["Sales Order Number"]);
+			} else {
+				throw {
+					message: `Could not find sales order associated with S/N: ${serial}`
+				}
+			}
+		}).then((order) => {
 			// TODO: fix how we get the RMAs associated with the device
 			//rmas = db.getRMAs(customer.Number);
-			orders = _.flatten(orders);
-			context.result = orders
+			context.result = [order];
+			return res.render('search', context);
+		}).catch((err) => {
+			console.log('caught error!');
+			context.errors.server = {
+				msg: err.message
+			}
 			return res.render('search', context);
 		});
 	} else if (hasRmaQuery) {
