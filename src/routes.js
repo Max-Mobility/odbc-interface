@@ -628,6 +628,11 @@ router.post('/check_order', [
     });
 	if (input.SalesOrder) {
 		db.getOrder(input.SalesOrder).then((order) => {
+			if (!order) {
+				throw {
+					message: `Could not find order by Order Number: ${input.SalesOrder}`
+				};
+			}
 			if (input.MarkFor) {
 				if (input.CustomerPoNumber) {
 				}

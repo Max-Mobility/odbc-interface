@@ -146,6 +146,9 @@ const types = {
             "Contact": 'Contact',
         },
         create: function(input) {
+			if (_.isEmpty(input)) {
+				return null;
+			}
             var o = Object.keys(this.inputMap).reduce((a, e) => {
 				let val = input[this.inputMap[e]];
 				if (val !== undefined)
@@ -195,6 +198,9 @@ const types = {
 			'Date Last Inventory Part': "DateLastInvPart",
         },
         create: function(input, customer) {
+			if (_.isEmpty(input)) {
+				return null;
+			}
             /*
             // customer
             customer["Number"] = input.Customer;
@@ -251,6 +257,9 @@ const types = {
             "Serial Number": 'Serial'
         },
         create: function(input) {
+			if (_.isEmpty(input)) {
+				return null;
+			}
             var o = Object.keys(this.inputMap).reduce((a, e) => {
 				let val = input[this.inputMap[e]];
 				if (val !== undefined)
@@ -272,6 +281,9 @@ const types = {
 			"Actual Completion Date": "ActCompleteDate",
 		},
 		create: function(input) {
+			if (_.isEmpty(input)) {
+				return null;
+			}
             var o = Object.keys(this.inputMap).reduce((a, e) => {
 				let val = input[this.inputMap[e]];
 				if (val !== undefined)
@@ -296,6 +308,9 @@ const types = {
 			"ID": "ID",
 		},
 		create: function(input) {
+			if (_.isEmpty(input)) {
+				return null;
+			}
             var o = Object.keys(this.inputMap).reduce((a, e) => {
 				let val = input[this.inputMap[e]];
 				if (val !== undefined)
@@ -350,6 +365,9 @@ const types = {
 				return [];
 		},
 		create: function(input) {
+			if (_.isEmpty(input)) {
+				return null;
+			}
             var o = Object.keys(this.inputMap).reduce((a, e) => {
 				let val = input[this.inputMap[e]];
 				if (val !== undefined)
@@ -382,6 +400,9 @@ const types = {
 			'Location': 'Location'
         },
         create: function(input, output, customer) {
+			if (_.isEmpty(input)) {
+				return null;
+			}
             var o = Object.keys(this.inputMap).reduce((a, e) => {
 				let val = input[this.inputMap[e]];
 				if (val !== undefined)
@@ -616,7 +637,7 @@ function getOrder(order_number) {
     return Promise.all(tasks).then((dataArray) => {
         return _.flatten(dataArray).reduce(mergeObjects, {});
     }).then((obj) => {
-        return types.Order.create(obj);
+		return types.Order.create(obj);
     }).catch((err) => {
         console.log(`cannot get order: ${err}`);
     });
