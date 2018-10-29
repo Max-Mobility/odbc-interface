@@ -18,15 +18,13 @@
 
 <form method="post" action="/print_rma" novalidate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <% for (var field in rma_search_fields) { let f = rma_search_fields[field]; %>
-  <div class="form-field <%= errors[f.title] ? 'form-field-invalid' : '' %>">
-    <label><%= f.title %></label>
-    <input class="input" id="<%= f.id %>" name="<%= f.id %>" value="<%= data[f.title] %>" />
-    <% if (errors[f.title]) { %>
-      <div class="error"><%= errors[f.title].msg %></div>
+  <div class="form-field <%= errors.rma_number ? 'form-field-invalid' : '' %>">
+    <label for="rma_number">RMA Number</label>
+    <input class="input" id="rma_number" name="rma_number" value="<%= data.rma_number %>" />
+    <% if (errors.rma_number) { %>
+      <div class="error"><%= errors.rma_number.msg %></div>
     <% } %>
   </div>
-  <% } %>
   <div class="form-actions">
     <button class="btn" type="submit">Print</button>
   </div>

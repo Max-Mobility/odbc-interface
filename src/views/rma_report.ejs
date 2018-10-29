@@ -111,7 +111,7 @@
 		  <% if (order !== null) { %>
 		  <tr>
 			<td style="text-align: left;">
-			  TRACKING NUMBER: <a href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= order["Tracking Number"] %>"><%= order["Tracking Number"] %></a>
+			  TRACKING NUMBER: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= order["Tracking Number"] %>"><%= order["Tracking Number"] %></a>
 			</td>
 		  </tr>
 		  <% } %>

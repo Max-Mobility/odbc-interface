@@ -245,14 +245,6 @@ router.post('/check_rma', [
         }));
     }
 
-    const fields = Object.keys(db.fieldMap);
-    const input = Object.keys(req.body).reduce((a, e) => {
-        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
-            a[db.fieldMap[e]] = req.body[e];
-        }
-        return a;
-    }, {});
-
     var context = Object.assign(templateContext(), {
         data: req.body,
         errors: {},
@@ -275,14 +267,15 @@ router.post('/check_rma', [
     return db.getRMA(rmaNumber).then((r) => {
         // PULL OUT DATA
 		rma = r;
-        if (rma && db.exists(rma["Sales Order"])) {
-            return db.getOrder(rma['Sales Order']);
-        } else if (db.exists(rma["RMA Number"])) {
-			return null;
-        } else {
+		if (!rma) {
 			throw ({
 				message: "Couldn't find RMA " + rmaNumber
 			});
+		}
+        if (db.exists(rma["Sales Order"])) {
+            return db.getOrder(rma['Sales Order']);
+        } else {
+			return null;
 		}
     }).then((o) => {
         order = o;
@@ -781,7 +774,7 @@ router.get('/print_rma', (req, res) => {
 });
 
 router.post('/print_rma', [
-    check('RMA Number')
+    check('rma_number')
         .isLength({ min: 1 })
         .withMessage('RMA is required')
         .trim()
@@ -795,13 +788,7 @@ router.post('/print_rma', [
         }));
     }
 
-    const fields = Object.keys(db.fieldMap);
-    const input = Object.keys(req.body).reduce((a, e) => {
-        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
-            a[db.fieldMap[e]] = req.body[e];
-        }
-        return a;
-    }, {});
+    const data = matchedData(req)
 
     var context = Object.assign(templateContext(), {
         data: req.body,
@@ -814,17 +801,18 @@ router.post('/print_rma', [
 	var job = null;
 	var progRec = null;
 
-    return db.getRMA(input.RmaNumber).then((r) => {
+    return db.getRMA(data.rma_number).then((r) => {
         // PULL OUT DATA
 		rma = r;
+		if (!rma) {
+			throw ({
+				message: "Couldn't find RMA " + data.rma_number
+			});
+		}
         if (rma && db.exists(rma["Sales Order"])) {
             return db.getOrder(rma['Sales Order']);
-        } else if (db.exists(rma["RMA Number"])) {
-			return null;
         } else {
-			throw ({
-				message: "Couldn't find RMA " + input.RmaNumber
-			});
+			return null;
 		}
     }).then((o) => {
         order = o;
