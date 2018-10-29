@@ -267,7 +267,6 @@ router.post('/check_rma', [
         return res.render('check_rma', context);
     }).catch((err) => {
         // got an error - render it!
-        console.log('caught error!');
         context.errors.server = {
             msg: err.message
         }
@@ -354,6 +353,9 @@ router.post('/search', [
         csrfToken: req.csrfToken()
     });
 
+	let order = null,
+		rma = null;
+
 	if (hasOrderQuery) {
 		// if we get SalesOrder, CustomerPoNumber, or MarkFor
 		// - search for order, then invoice, then device (both), then rma
@@ -380,16 +382,15 @@ router.post('/search', [
 			context.result = orders;
 			return res.render('search', context);
 		}).catch((err) => {
-			console.log('caught error!');
 			context.errors.server = {
 				msg: err.message
 			}
 			return res.render('search', context);
 		});
 	} else if (hasSerialQuery) {
-	// if we get SerialNumber
-	// - search for invoice, order, rma
-	// - other device
+		// if we get SerialNumber
+		// - search for invoice, order, rma
+		// - other device
 		return db.getDevice(serial).then((device) => {
 			if (!device) {
 				throw {
@@ -397,19 +398,38 @@ router.post('/search', [
 				}
 			}
 			if (db.exists(device["Sales Order Number"])) {
-				return db.getOrder(device["Sales Order Number"]);
+				return db.getRMABySerial(serial).then((rmas) => {
+					console.log(rmas);
+					return db.getOrder(device["Sales Order Number"]);
+				});
+			} else {
+				return null;
+			}
+		}).then((_order) => {
+			order = _order;
+			return db.getRMABySerial(serial);
+		}).then((_rma) => {
+			if (_rma) {
+				return getRMA(_rma["RMA Number"]);
+			} else {
+				return null;
+			}
+		}).then((rmaRecord) => {
+			if (rmaRecord) {
+				rmaDisplay(rmaRecord);
+				rma = rmaRecord.rma;
+			}
+			if (order) {
+				context.result = [order];
+			} else if (rma) {
+				context.result = [rma];
 			} else {
 				throw {
-					message: `Could not find sales order associated with S/N: ${serial}`
+					message: `Could not find sales order or RMA associated with S/N: ${serial}`
 				}
 			}
-		}).then((order) => {
-			// TODO: fix how we get the RMAs associated with the device
-			//rmas = db.getRMAs(customer.Number);
-			context.result = [order];
 			return res.render('search', context);
 		}).catch((err) => {
-			console.log('caught error!');
 			context.errors.server = {
 				msg: err.message
 			}
@@ -428,7 +448,6 @@ router.post('/search', [
 			return res.render('search', context);
 		}).catch((err) => {
 			// got an error - render it!
-			console.log('caught error!');
 			context.errors.server = {
 				msg: err.message
 			}
@@ -503,7 +522,6 @@ router.post('/check_order', [
 		context.result = order;
 		return res.render('check_order', context);
 	}).catch((err) => {
-		console.log('caught error!');
 		context.errors.server = {
 			msg: err.message
 		}
@@ -557,7 +575,6 @@ router.post('/print_rma', [
         return res.render('rma_report', context);
     }).catch((err) => {
         // got an error - render it!
-        console.log('caught error!', err);
         context.errors.server = {
             msg: err.message
         }
