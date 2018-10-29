@@ -26,7 +26,6 @@ function makeID(s) {
 var templateContext = function() {
     const sf = [
 		'Sales Order Number',
-		'Customer Name',
 		'PO Number',
 		'Mark For',
 		'Serial Number',
