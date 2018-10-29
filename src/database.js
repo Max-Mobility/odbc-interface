@@ -224,7 +224,10 @@ const types = {
 			o['__DISPLAY__'] = `<div style=\"display: grid;\"><span>Order: <font color=\"blue\">${parseInt(o["Order Number"])}</font><br></span><span>Status: <font color=\"blue\">${o['Status']}</font>`;
 			o['__DISPLAY__'] += `<br></span><span>Mark For: <font color=\"blue\">${mf}</font>`;
 			if (o['Tracking Number']) {
-				o['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${o['Tracking Number']}">${o['Tracking Number']}</a></span>`;
+				o['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${o['Tracking Number']}">${o['Tracking Number']}</a>`;
+			}
+			if (o['PO Number']) {
+				o['__DISPLAY__'] += `<br></span><span>PO Number: <font color="blue">${o['PO Number']}</font>`;
 			}
 			o['__DISPLAY__'] += `</span></div>`;
 			// update stock codes and such
