@@ -25,22 +25,19 @@ function makeID(s) {
 
 var templateContext = function() {
     const sf = [
-		'Email',
 		'Sales Order Number',
-		'Customer Number',
 		'Customer Name',
 		'PO Number',
 		'Mark For',
 		'Serial Number',
 		'RMA Number',
-		'Attention',
 	];
     const fields=Object.keys(db.fieldMap).map((f) => { return {
         title: f,
         id: makeID(f)
     }});
     return {
-        search_fields: fields.filter(f => sf.indexOf(f.title) > -1),
+		search_fields: sf.map(f => fields.find(field => field.title === f)),
         // actual data
 		result: null,
     };
