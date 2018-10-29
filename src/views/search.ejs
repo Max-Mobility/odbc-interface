@@ -18,7 +18,7 @@
 
 <form method="post" action="/search" novalidate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <% for (var field in customer_search_fields) { let f = customer_search_fields[field]; %>
+  <% for (var field in search_fields) { let f = search_fields[field]; %>
   <div class="form-field <%= errors[f.title] ? 'form-field-invalid' : '' %>">
     <label><%= f.title %></label>
     <input class="input" id="<%= f.id %>" name="<%= f.id %>" value="<%= data[f.title] %>" />
@@ -32,21 +32,23 @@
   </div>
 </form>
 
-<div class="results">
+<div class="results" style="width: 50%">
 
 <div class="customer-info">
-<% if (customer && customer.Number) { %>
-<h3>Customer <font color="blue"><%= customer.Name %></font></h3>
-<% } else { %>
+<% if (!result || result.length === 0) { %>
 <% Object.keys(data).filter(k => k !== '_csrf').map((k) => { var d = data[k]; if (d) { %>
 <h3><font color="Red">Couldn't find data by '<%= d %>'</font></h3>
 <% }}) %>
 <% } %>
 </div>
 
-<div class="orders col">
-<h4>Orders</h4>
-<% if (orders) { orders.map((i) => { %>
+<div class="orders col" style="width: 100%">
+<h4>Search result for<br>
+<% Object.keys(data).filter(k => k !== '_csrf').map((k) => { var d = data[k]; if (d) { %>
+<font color="Blue"><%= k %>: '<%= d %>'</font><br>
+<% }}) %>
+</h4>
+<% if (result) { result.map((i) => { %>
 <details><summary><%- i["__DISPLAY__"] %></summary>
 <div class="property-list">
 <% Object.keys(i).filter(k => k[0] != '_').map((k) => { %>
@@ -58,40 +60,6 @@
 <% } else { %>
 <div class="property-value"><pre><%= i[k] %></pre></div>
 <% } %>
-</div>
-<% }) %>
-</div>
-</details>
-<% })} %>
-</div>
-
-<div class="rmas col">
-<h4>RMAs</h4>
-<% if (rmas) { rmas.map((i) => { %>
-<details><summary>RMA: <%= i["RMA Number"] %></summary>
-<div class="property-list">
-<% Object.keys(i).filter(k => k[0] != '_').map((k) => { %>
-<hr/>
-<div class="property">
-<div class="property-label"><b><%= k %></b>: </div>
-<div class="property-value"><pre><%= i[k] %></pre></div>
-</div>
-<% }) %>
-</div>
-</details>
-<% })} %>
-</div>
-
-<div class="devices col">
-<h4>Devices</h4>
-<% if (devices) { devices.map((i) => { %>
-<details><summary>Device: <%= i["Serial Number"] %></summary>
-<div class="property-list">
-<% Object.keys(i).filter(k => k[0] != '_').map((k) => { %>
-<hr/>
-<div class="property">
-<div class="property-label"><b><%= k %></b>: </div>
-<div class="property-value"><pre><%= i[k] %></pre></div>
 </div>
 <% }) %>
 </div>

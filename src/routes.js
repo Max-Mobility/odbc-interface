@@ -24,24 +24,25 @@ function makeID(s) {
 }
 
 var templateContext = function() {
-    const csf = ['Email', 'Sales Order Number', 'Customer Number', 'Customer Name', 'PO Number'];
-    const ssf = ['Serial Number'];
-    const rsf = ['RMA Number'];
-    const mfsf = ['Mark For'];
+    const sf = [
+		'Email',
+		'Sales Order Number',
+		'Customer Number',
+		'Customer Name',
+		'PO Number',
+		'Mark For',
+		'Serial Number',
+		'RMA Number',
+		'Attention',
+	];
     const fields=Object.keys(db.fieldMap).map((f) => { return {
         title: f,
         id: makeID(f)
     }});
     return {
-        customer_search_fields: fields.filter(f => csf.indexOf(f.title) > -1),
-        serial_search_fields: fields.filter(f => ssf.indexOf(f.title) > -1),
-        rma_search_fields: fields.filter(f => rsf.indexOf(f.title) > -1),
-        markfor_search_fields: fields.filter(f => mfsf.indexOf(f.title) > -1),
+        search_fields: fields.filter(f => sf.indexOf(f.title) > -1),
         // actual data
-        customer: {},
-        orders: [],
-        rmas: [],
-        devices: [],
+		result: null,
     };
 }
 
@@ -254,7 +255,6 @@ router.post('/check_rma', [
 
     var context = Object.assign(templateContext(), {
         data: req.body,
-		rma: null,
         errors: {},
         csrfToken: req.csrfToken()
     });
@@ -271,6 +271,182 @@ router.post('/check_rma', [
 	// programmed = testing
 	// job = packaging
 	let rmaNumber = data.rma_number;
+
+    return db.getRMA(rmaNumber).then((r) => {
+        // PULL OUT DATA
+		rma = r;
+        if (rma && db.exists(rma["Sales Order"])) {
+            return db.getOrder(rma['Sales Order']);
+        } else if (db.exists(rma["RMA Number"])) {
+			return null;
+        } else {
+			throw ({
+				message: "Couldn't find RMA " + rmaNumber
+			});
+		}
+    }).then((o) => {
+        order = o;
+		// now get the job
+        if (rma && db.exists(rma["Job"])) {
+            return db.getJob(rma['Job']);
+        } else if (rma) {
+			return null;
+        } else {
+			throw ({
+				message: "Couldn't find RMA " + rmaNumber
+			});
+		}
+    }).then((j) => {
+        job = j;
+		// now get the parts
+		if (job !== null) {
+			return db.getParts(rma['Job']);
+		} else {
+			return null;
+		}
+	}).then((parts) => {
+		let orderParts = [];
+		if (job !== null) {
+			if (order !== null) {
+				orderParts = db.types.Part.partsFromOrder(order);
+			}
+			if (orderParts.length) {
+				job.Parts = _.uniq(_.flatten(_.union(parts, orderParts)), false, _.iteratee('Stock Code'));
+			} else {
+				job.Parts = parts;
+			}
+		}
+		// now get programming record
+		if (rma && db.exists(rma['Serial Number'])) {
+			return db.getProgrammingRecord(rma['Serial Number']);
+		} else {
+			return null;
+		}
+    }).then((pr) => {
+		progRec = pr;
+		// display based on order / rma / programmed / job
+		let status = '';
+		let shipDate = '';
+		if (order && order['Status'] == 9) {
+			status = 'Shipped';
+			shipDate = moment(order['Actual Ship Date']);
+		} else if (order && order['Status'] == 'S') {
+			status = 'Awaiting PO';
+		} else if (job && job['Complete'] == 'Y') {
+			status = 'Packaging';
+			shipDate = moment().add(1, 'days');
+		} else if (progRec && progRec['Date Programmed'] && progRec['Date Programmed'].length) {
+			status = 'Testing';
+			shipDate = moment().add(2, 'days');
+		} else if (rma && rma['Status'] == 9) {
+			status = 'Processing / Repairing';
+			shipDate = moment().add(3, 'days');
+		} else {
+			status = 'Awaiting Delivery';
+		}
+		if (shipDate !== '') {
+			shipDate = shipDate.calendar(null,{
+				lastDay : '[Yesterday]',
+				sameDay : '[Today]',
+				nextDay : '[Tomorrow]',
+				lastWeek : '[last] dddd',
+				nextWeek : 'dddd',
+				sameElse : 'L'
+			});
+		}
+		// show latest ship date
+		// - processing / repairing = 3 DAYS (latest ship date)
+		//  - testing = DAY AFTER TOMORROW
+		//  - Packaging = TOMORROW
+		//  - Shipped = order['Actual Ship Date']
+
+		rma['__DISPLAY__'] = `<div style=\"display: grid;\"><span>RMA: <font color=\"blue\">${parseInt(rma["RMA Number"])}</font><br></span><span>Status: <font color=\"blue\">${status}</font>`;
+		if (shipDate.length && status == 'Shipped') {
+			rma['__DISPLAY__'] += `<br></span><span>Shipped: <font color=\"blue\">${shipDate}</font>`;
+		} else if (shipDate.length) {
+			rma['__DISPLAY__'] += `<br></span><span>Expected Ship Date: <font color=\"blue\">${shipDate}</font>`;
+		}
+		if (order && order['Tracking Number']) {
+			rma['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${order['Tracking Number']}">${order['Tracking Number']}</a></span>`;
+		}
+		rma['__DISPLAY__'] += `</span></div>`;
+		context.result = rma;
+		// now render it
+        console.log('rendering data!');
+        return res.render('check_rma', context);
+    }).catch((err) => {
+        // got an error - render it!
+        console.log('caught error!');
+        context.errors.server = {
+            msg: err.message
+        }
+        return res.render('check_rma', context);
+    });
+})
+
+// Search
+router.get('/search', (req, res) => {
+    res.render('search', Object.assign(templateContext(), {
+        data: req.body,
+        errors: {},
+        items: [],
+        csrfToken: req.csrfToken()
+    }));
+});
+
+router.post('/search', [
+], (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.render('search', Object.assign(templateContext(), {
+            data: req.body,
+            errors: errors.mapped(),
+			rma: null,
+            csrfToken: req.csrfToken()
+        }));
+    }
+
+    const input = Object.keys(req.body).reduce((a, e) => {
+        if (e !== '_csrf' && e !== 'errors') {
+            a[e] = req.body[e];
+		}
+        return a;
+    }, {});
+
+	const invalidInput = Object.keys(input).reduce((a, e) => {
+		return a && !db.exists(input[e]);
+	}, true);
+
+	if (invalidInput) {
+        return res.render('check_order', Object.assign(templateContext(), {
+            data: req.body,
+            items: [],
+            errors: {
+				input: {
+					msg: 'You must provide at least one search input!'
+				}
+			},
+            csrfToken: req.csrfToken()
+        }));
+	}
+
+    var context = Object.assign(templateContext(), {
+        data: req.body,
+		rma: null,
+        errors: {},
+        csrfToken: req.csrfToken()
+    });
+
+    var order = null;
+    var rma = null;
+	var job = null;
+	var progRec = null;
+
+	// order status = shipped
+	// rma status = processed
+	// programmed = testing
+	// job = packaging
+	let rmaNumber = input.RmaNumber;
 
     return db.getRMA(rmaNumber).then((r) => {
         // PULL OUT DATA
@@ -388,14 +564,14 @@ router.post('/check_rma', [
         context.rma = rma;
 		// now render it
         console.log('rendering data!');
-        return res.render('check_rma', context);
+        return res.render('search', context);
     }).catch((err) => {
         // got an error - render it!
         console.log('caught error!');
         context.errors.server = {
             msg: err.message
         }
-        return res.render('check_rma', context);
+        return res.render('search', context);
     });
 })
 
@@ -410,10 +586,6 @@ router.get('/check_order', (req, res) => {
 });
 
 router.post('/check_order', [
-    check('order_number')
-        .isLength({ min: 1 })
-        .withMessage('Order is required')
-        .trim()
 ], (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -425,114 +597,98 @@ router.post('/check_order', [
         }));
     }
 
-    const data = matchedData(req)
-
-    var context = Object.assign(templateContext(), {
-        data: req.body,
-        errors: {},
-        items: [],
-        csrfToken: req.csrfToken()
-    });
-    db.getOrder(data.order_number).then((order) => {
-        console.log('rendering data!');
-        context.items = [order];
-        res.render('check_order', context);
-    }).catch((err) => {
-        console.log('caught error!');
-        context.errors.server = {
-            msg: err.message
-        }
-        res.render('check_order', context);
-    });
-})
-
-
-// search page
-router.get('/search_by_customer', (req, res) => {
-    res.render('search_by_customer', Object.assign(templateContext(), {
-        data: req.body,
-        errors: {},
-        csrfToken: req.csrfToken()
-    }));
-});
-
-router.post('/search_by_customer', [
-], (req, res) => {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-        return res.render('search_by_customer', Object.assign(templateContext(), {
-            data: req.body,
-            errors: errors.mapped(),
-            csrfToken: req.csrfToken()
-        }));
-    }
-
-    const fields = Object.keys(db.fieldMap);
     const input = Object.keys(req.body).reduce((a, e) => {
-        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
-            a[db.fieldMap[e]] = req.body[e];
-        }
+        if (e !== '_csrf' && e !== 'errors') {
+            a[e] = req.body[e];
+		}
         return a;
     }, {});
 
+	const invalidInput = Object.keys(input).reduce((a, e) => {
+		return a && !db.exists(input[e]);
+	}, true);
+
+	if (invalidInput) {
+        return res.render('check_order', Object.assign(templateContext(), {
+            data: req.body,
+            items: [],
+            errors: {
+				input: {
+					msg: 'You must provide at least one search input!'
+				}
+			},
+            csrfToken: req.csrfToken()
+        }));
+	}
+
     var context = Object.assign(templateContext(), {
         data: req.body,
         errors: {},
         csrfToken: req.csrfToken()
     });
+	if (input.SalesOrder) {
+		db.getOrder(input.SalesOrder).then((order) => {
+			if (input.MarkFor) {
+				if (input.CustomerPoNumber) {
+				}
+			} else if (input.CustomerPoNumber) {
+			}
+			context.result = order;
+			res.render('check_order', context);
+		}).catch((err) => {
+			console.log('caught error!');
+			context.errors.server = {
+				msg: err.message
+			}
+			res.render('check_order', context);
+		});
+	} else if (input.MarkFor) {
+		db.getOrderByMarkFor(input.MarkFor).then((orders) => {
+			if (input.CustomerPoNumber) {
+			}
+			if (orders.length > 1) {
+				context.errors.result = {
+					msg: `Found ${orders.length} orders - only showing the first!`
+				};
+			}
+			else if (orders.length === 0) {
+				context.errors.result = {
+					msg: `Could not find any orders!`
+				};
+			}
+			context.result = orders[0];
+			res.render('check_order', context);
+		}).catch((err) => {
+			console.log('caught error!');
+			context.errors.server = {
+				msg: err.message
+			}
+			res.render('check_order', context);
+		});
+	} else if (input.CustomerPoNumber) {
+		db.getOrderByPoNumber(input.CustomerPoNumber).then((orders) => {
+			if (orders.length > 1) {
+				context.errors.result = {
+					msg: `Found ${orders.length} orders - only showing the first!`
+				};
+			}
+			else if (orders.length === 0) {
+				context.errors.result = {
+					msg: `Could not find any orders!`
+				};
+			}
+			context.result = orders[0];
+			res.render('check_order', context);
+		}).catch((err) => {
+			console.log('caught error!');
+			context.errors.server = {
+				msg: err.message
+			}
+			res.render('check_order', context);
+		});
+	}
+})
 
-    var customer = {};
-    var orders = []   // get orders here
-    var rmas = [];    // get rmas here
-    var devices = []; // get serial numbers and such here
-    
-    // look up from SorMaster
-    var lookupOpts = {
-        table: 'SorMaster',
-        queries: []
-    };
-    lookupOpts.queries = db.makeQueries(lookupOpts.table, input);
-    return new Promise((resolve, reject) => {
-        if (lookupOpts.queries.length) {
-            db.lookup(lookupOpts).then((data) => resolve(data)).catch((err) => reject(err));
-        } else {
-            resolve([]);
-        }
-    }).then((data) => {
-        // PULL OUT DATA
-        if (data && data.length) {
-            return db.getCustomer(data[0].Customer);
-        } else {
-            throw ({
-                message: 'Could not find record by : ' + JSON.stringify(lookupOpts.queries, null, 2)
-            });
-        }
-    }).then((c) => {
-        customer = c;
-        orders = db.getOrders(customer.Number);
-        rmas = db.getRMAs(customer.Number);
-        //devices = db.getDevices(customer.Number);
-        return Promise.all([orders, rmas]);
-    }).then((objects) => {
-        orders = objects[0];
-        rmas = objects[1];
-        //devices = objects[2];
-        // now render the data
-        context.customer = customer;
-        context.orders = orders;
-        context.rmas = rmas;
-        context.devices = devices;
-        console.log('rendering data!');
-        res.render('search_by_customer', context);
-    }).catch((err) => {
-        // got an error - render it!
-        console.log('caught error!');
-        context.errors.server = {
-            msg: err.message
-        }
-        res.render('search_by_customer', context);
-    });
-});
 
 // search page
 router.get('/search_by_serial', (req, res) => {
@@ -607,77 +763,6 @@ router.post('/search_by_serial', [
             msg: err.message
         }
         res.render('search_by_serial', context);
-    });
-});
-
-// search page
-router.get('/search_by_rma', (req, res) => {
-    res.render('search_by_rma', Object.assign(templateContext(), {
-        data: req.body,
-        errors: {},
-        csrfToken: req.csrfToken()
-    }));
-});
-
-router.post('/search_by_rma', [
-], (req, res) => {
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
-        return res.render('search_by_rma', Object.assign(templateContext(), {
-            data: req.body,
-            errors: errors.mapped(),
-            csrfToken: req.csrfToken()
-        }));
-    }
-
-    const fields = Object.keys(db.fieldMap);
-    const input = Object.keys(req.body).reduce((a, e) => {
-        if (db.fieldMap[e] || fields.indexOf(e) > -1) {
-            a[db.fieldMap[e]] = req.body[e];
-        }
-        return a;
-    }, {});
-
-    var context = Object.assign(templateContext(), {
-        data: req.body,
-        errors: {},
-        csrfToken: req.csrfToken()
-    });
-
-    var orders = []   // get orders here
-    var rmas = [];    // get rmas here
-    var devices = []; // get serial numbers and such here
-
-    return db.getRMA(input.RmaNumber).then((rma) => {
-        // PULL OUT DATA
-        rmas = [rma];
-        if (rma && db.exists(rma["Sales Order"])) {
-            return db.getOrder(rma['Sales Order']);
-        } else {
-			return null;
-        }
-    }).then((o) => {
-        orders = [o];
-        if (db.exists(rmas[0]['Serial Number'])) {
-            return db.getDevice(rmas[0]['Serial Number']);
-        } else {
-            return []
-        }
-    }).then((devs) => {
-        devices = devs
-        // now render the data
-        context.orders = orders;
-        context.rmas = rmas;
-        context.devices = [devices];
-        console.log('rendering data!');
-        res.render('search_by_rma', context);
-    }).catch((err) => {
-        // got an error - render it!
-        console.log('caught error!', err);
-        context.errors.server = {
-            msg: err.message
-        }
-        res.render('search_by_rma', context);
     });
 });
 

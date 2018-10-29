@@ -36,19 +36,14 @@
 <div class="rmas col" style="width: 100%">
 <h4>Search result for RMA <font color="blue"><%= data.rma_number %></font>:</h4>
 
-<% if (rma) { %>
-<details><summary><%- rma["__DISPLAY__"] %></summary>
+<% if (result) { %>
+<details><summary><%- result["__DISPLAY__"] %></summary>
 <div class="property-list">
-<% Object.keys(rma).filter(k => k[0] != '_').map((k) => { %>
+<% Object.keys(result).filter(k => k[0] != '_').map((k) => { %>
 <hr/>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>
-
-<% if (k === 'Tracking Number') { %>
-<div class="property-value"><pre><a href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= rma[k] %>"><%= rma[k] %></a></pre></div>
-<% } else { %>
-<div class="property-value"><pre><%= rma[k] %></pre></div>
-<% } %>
+<div class="property-value"><pre><%= result[k] %></pre></div>
 </div>
 <% }) %>
 </div>

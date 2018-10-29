@@ -5,7 +5,7 @@
 </div>
 <div class="form-header">
   <% if (Object.keys(errors).length === 0) { %>
-    <h2>Enter Order Number</h2>
+    <h2>Enter One Or More Search Queries</h2>
   <% } else { %>
     <h2 class="errors-heading">Oops, please correct the following:</h2>
     <ul class="errors-list">
@@ -18,11 +18,26 @@
 
 <form method="post" action="/check_order" novalidate>
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <div class="form-field <%= errors.order_number ? 'form-field-invalid' : '' %>">
-    <label for="order_number">Order Number</label>
-    <input class="input" id="order_number" name="order_number" value="<%= data.order_number %>" />
-    <% if (errors.order_number) { %>
-      <div class="error"><%= errors.order_number.msg %></div>
+  <div class="form-field <%= errors.SalesOrder ? 'form-field-invalid' : '' %>">
+  <!-- Order Number -->
+    <label for="SalesOrder">Order Number</label>
+    <input class="input" id="SalesOrder" name="SalesOrder" value="<%= data.SalesOrder %>" />
+    <% if (errors.SalesOrder) { %>
+      <div class="error"><%= errors.SalesOrder.msg %></div>
+    <% } %>
+  </div>
+  <!-- Mark For -->
+    <label for="MarkFor">Mark For</label>
+    <input class="input" id="MarkFor" name="MarkFor" value="<%= data.MarkFor %>" />
+    <% if (errors.MarkFor) { %>
+      <div class="error"><%= errors.MarkFor.msg %></div>
+    <% } %>
+  </div>
+  <!-- PO Number -->
+    <label for="CustomerPoNumber">PO Number</label>
+    <input class="input" id="CustomerPoNumber" name="CustomerPoNumber" value="<%= data.CustomerPoNumber %>" />
+    <% if (errors.CustomerPoNumber) { %>
+      <div class="error"><%= errors.CustomerPoNumber.msg %></div>
     <% } %>
   </div>
   <div class="form-actions">
@@ -32,33 +47,31 @@
 
 <div class="results" style="width: 50%">
 
-<% if (data.order_number) { %>
+<% if (result) { %>
 <div class="orders col" style="width: 100%">
-<h4>Search result for order <font color="blue"><%= data.order_number %></font>:</h4>
-<% if (items) { items.map((i) => { %>
-<% if (i["Order Number"] !== null && i["Order Number"] !== undefined) { %>
-<details open><summary>Order: <%= i["Order Number"] %></summary>
+<h4>Search result for Order <font color="blue"><%= data.order_number %></font>:</h4>
+
+<details><summary><%- result["__DISPLAY__"] %></summary>
 <div class="property-list">
-<% Object.keys(i).filter(k => k[0] != '_').sort().map((k) => { %>
+<% Object.keys(result).filter(k => k[0] != '_').map((k) => { %>
 <hr/>
-<% if (i[k] !== null && i[k] !== undefined) { %>
 <div class="property">
 <div class="property-label"><b><%= k %></b>: </div>
 <% if (k === 'Tracking Number') { %>
-<div class="property-value"><pre><a href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= i[k] %>"><%= i[k] %></a></pre></div>
+<div class="property-value"><pre><a href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=<%= result[k] %>"><%= result[k] %></a></pre></div>
 <% } else { %>
-<div class="property-value"><pre><%= i[k] %></pre></div>
+<div class="property-value"><pre><%= result[k] %></pre></div>
 <% } %>
 </div>
-<% } %>
 <% }) %>
 </div>
 </details>
-<% } else { %>
-<h4>Couldn't find Order <font color="red"><%= data.order_number %></font></h4>
-<% } %>
-<% })} %>
+
 </div>
+<% } else { %>
+<% Object.keys(data).filter(k => k !== '_csrf').map((k) => { var d = data[k]; if (d) { %>
+<h3><font color="Red">Couldn't find data by '<%= d %>'</font></h3>
+<% }}) %>
 <% } %>
 
 </div>

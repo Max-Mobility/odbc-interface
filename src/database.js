@@ -214,6 +214,13 @@ const types = {
 			mf = exists(mf) ? `<font color=\"blue\">${mf}</font>` :
 				"<font color=\"gray\">No Mark For</font>";
 			o["__DISPLAY__"] = `<span>Order: ${parseInt(o["Order Number"])}: ${mf}</span>`;
+
+			o['__DISPLAY__'] = `<div style=\"display: grid;\"><span>Order: <font color=\"blue\">${parseInt(o["Order Number"])}</font><br></span><span>Status: <font color=\"blue\">${o['Status']}</font>`;
+			o['__DISPLAY__'] += `<br></span><span>Mark For: <font color=\"blue\">${mf}</font>`;
+			if (o['Tracking Number']) {
+				o['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${o['Tracking Number']}">${o['Tracking Number']}</a></span>`;
+			}
+			o['__DISPLAY__'] += `</span></div>`;
 			// update stock codes and such
             return o;
         }
@@ -615,6 +622,17 @@ function getOrder(order_number) {
     });
 };
 
+function sortByKey(objects, key, value) {
+	return objects.sort((a,b) => {
+		let _a = a[key].toLowerCase();
+		let _b = b[key].toLowerCase();
+		let aeq = _a === value.toLowerCase();
+		let beq = _b === value.toLowerCase();
+		let offset = (aeq ? -1 : 1) + (beq ? 1 : -1);
+		return _a.localeCompare(_b) + offset;
+	});
+}
+
 function getOrderByMarkFor(markfor) {
     var lookupOpts = {
         table: 'CusSorMaster+',
@@ -630,18 +648,33 @@ function getOrderByMarkFor(markfor) {
         var orderNumbers = data.map(d => d.SalesOrder);
         orderNumbers = _.uniq(orderNumbers).filter(i => exists(i));
         var tasks = orderNumbers.map((order) => {
-            console.log(`Looking up order: ${order}`);
             return getOrder(order);
         });
         return Promise.all(tasks).then((orders) => {
-			return orders.sort((a,b) => {
-				let amf = a["Mark For"].toLowerCase();
-				let bmf = b["Mark For"].toLowerCase();
-				let aeq = amf === markfor.toLowerCase();
-				let beq = bmf === markfor.toLowerCase();
-				let offset = (aeq ? -1 : 1) + (beq ? 1 : -1);
-				return amf.localeCompare(bmf) + offset;
-			});
+			return sortByKey(orders, "Mark For", markfor);
+		});
+    });
+};
+
+function getOrderByPoNumber(poNumber) {
+    var lookupOpts = {
+        table: 'SorMaster',
+        queries: [
+            {
+                operator: 'LIKE',
+                column: 'CustomerPoNumber',
+                pattern: `%${poNumber}%`
+            }
+        ]
+    };
+    return lookup(lookupOpts).then(data => {
+        var orderNumbers = data.map(d => d.SalesOrder);
+        orderNumbers = _.uniq(orderNumbers).filter(i => exists(i));
+        var tasks = orderNumbers.map((order) => {
+            return getOrder(order);
+        });
+        return Promise.all(tasks).then((orders) => {
+			return sortByKey(orders, "PO Number", poNumber);
 		});
     });
 };
@@ -661,7 +694,6 @@ function getDeviceByInvoice(invoice) {
         var nums = data.map(d => d.Serial);
         nums = _.uniq(nums).filter(i => exists(i));
         var tasks = nums.map((num) => {
-            console.log(`Looking up serial: ${num}`);
             return getDevice(num);
         });
         return Promise.all(tasks);
@@ -1052,11 +1084,13 @@ module.exports = {
     getDeviceByInvoice,
     getOrders,
     getOrderByMarkFor,
+    getOrderByPoNumber,
     // basic
     checkRMA,
     checkOrder,
     lookup,
     // utilities
+	sortByKey,
     padNumber,
     makeQueries,
     // maps / lists
