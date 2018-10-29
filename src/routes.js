@@ -174,6 +174,49 @@ function getRMA(rmaNumber) {
 	});
 }
 
+function getOrders(orderNumber, poNumber, markFor) {
+	if (orderNumber) {
+		return db.getOrder(orderNumber).then((order) => {
+			if (!order) {
+				throw {
+					message: `Could not find order by Order Number: ${orderNumber}`
+				};
+			}
+			if (markFor) {
+				// TODO: filter order by mark for
+				if (poNumber) {
+					// TODO: filter order by po number
+				}
+			} else if (poNumber) {
+			}
+			return [order];
+		});
+	} else if (markFor) {
+		return db.getOrderByMarkFor(markFor).then((orders) => {
+			if (orders.length == 0) {
+				throw {
+					message: `Could not find order by Mark For: ${markFor}`
+				};
+			}
+			if (poNumber) {
+				// TODO: filter orders by po number
+			}
+			return orders;
+		});
+	} else if (poNumber) {
+		return db.getOrderByPoNumber(poNumber).then((orders) => {
+			if (orders.length == 0) {
+				throw {
+					message: `Could not find order by PO Number: ${poNumber}`
+				};
+			}
+			return orders;
+		});
+	} else {
+		return [];
+	}
+}
+
 // RMA page
 router.get('/check_rma', (req, res) => {
     res.render('check_rma', Object.assign(templateContext(), {
@@ -221,7 +264,6 @@ router.post('/check_rma', [
 		var rma = r.rma;
 		context.result = rma;
 		// now render it
-        console.log('rendering data!');
         return res.render('check_rma', context);
     }).catch((err) => {
         // got an error - render it!
@@ -262,10 +304,10 @@ router.post('/search', [
         return a;
     }, {});
 
+	// make sure we have at least one search term
 	const invalidInput = Object.keys(input).reduce((a, e) => {
 		return a && !db.exists(input[e]);
 	}, true);
-
 	if (invalidInput) {
         return res.render('search', Object.assign(templateContext(), {
             data: req.body,
@@ -279,15 +321,42 @@ router.post('/search', [
         }));
 	}
 
+	let orderNumber = input['Sales Order Number'],
+		poNumber = input['PO Number'],
+		markFor = input['Mark For'],
+		serial = input['Serial Number'],
+		rmaNumber = input['RMA Number'];
+
+	// make sure we don't have conflicting search terms
+	const hasOrderQuery = db.exists(orderNumber) ||
+		  db.exists(poNumber) ||
+		  db.exists(markFor);
+	const hasSerialQuery = db.exists(serial);
+	const hasRmaQuery = db.exists(rmaNumber)
+	const conflicting = (hasOrderQuery && hasRmaQuery) || (hasOrderQuery && hasSerialQuery) || (hasSerialQuery && hasRmaQuery);
+
+	if (conflicting) {
+        return res.render('search', Object.assign(templateContext(), {
+            data: req.body,
+            items: [],
+            errors: {
+				input: {
+					msg: 'You can only search by either order info, serial number, or rma number!'
+				}
+			},
+            csrfToken: req.csrfToken()
+        }));
+	}
+
     var context = Object.assign(templateContext(), {
         data: req.body,
         errors: {},
         csrfToken: req.csrfToken()
     });
 
-
-	// if we get SalesOrder, CustomerPoNumber, or MarkFor
-	// - search for order, then invoice, then device (both), then rma
+	if (hasOrderQuery) {
+		// if we get SalesOrder, CustomerPoNumber, or MarkFor
+		// - search for order, then invoice, then device (both), then rma
 		/*
         var invoices = orders.map(o => o['Invoice Number']);
         invoices = _.uniq(invoices).filter(i => db.exists(i));
@@ -296,27 +365,48 @@ router.post('/search', [
             return _.flatten(it);
         });
 		*/
-
-
+		return getOrders(orderNumber, poNumber, markFor).then((orders) => {
+			if (orders.length > 1) {
+				context.errors.result = {
+					msg: `Found ${orders.length} orders - only showing the first!`
+				};
+			}
+			else if (orders.length === 0) {
+				context.errors.result = {
+					msg: `Could not find any orders!`
+				};
+			}
+			// NOW GET INVOICES AND SUCH
+			context.result = orders;
+			return res.render('search', context);
+		}).catch((err) => {
+			console.log('caught error!');
+			context.errors.server = {
+				msg: err.message
+			}
+			return res.render('search', context);
+		});
+	} else if (hasSerialQuery) {
 	// if we get SerialNumber
 	// - search for invoice, order, rma
 	// - other device
-	/*
-    return db.getDevice(input.Serial).then((device) => {
-        // PULL OUT DATA
-        devices = [device];
-        var orderNumbers = devices.map(d => d['Sales Order Number']);
-        orderNumbers = _.uniq(orderNumbers).filter(i => db.exists(i));
-        orders = orderNumbers.map(o => db.getOrder(o));
-        rmas = db.getRMAs(customer.Number);
-        return Promise.all([orders, rmas]);
-    }).then((objects) => {
-        orders = _.flatten(objects[0]);
-        rmas = _.flatten(objects[1]);
-	*/
-
-	// if we get RMA
-	// - search for device, order
+		return db.getDevice(input.Serial).then((device) => {
+			// PULL OUT DATA
+			devices = [device];
+			var orderNumbers = devices.map(d => d['Sales Order Number']);
+			orderNumbers = _.uniq(orderNumbers).filter(i => db.exists(i));
+			return orderNumbers.map(o => db.getOrder(o));
+		}).then((orders) => {
+			// TODO: fix how we get the RMAs associated with the device
+			//rmas = db.getRMAs(customer.Number);
+			orders = _.flatten(orders);
+			context.result = orders
+			return res.render('search', context);
+		});
+	} else if (hasRmaQuery) {
+		// if we get RMA
+		// - search for device, order
+	}
 })
 
 // Order page
@@ -370,72 +460,27 @@ router.post('/check_order', [
         errors: {},
         csrfToken: req.csrfToken()
     });
-	if (input.SalesOrder) {
-		db.getOrder(input.SalesOrder).then((order) => {
-			if (!order) {
-				throw {
-					message: `Could not find order by Order Number: ${input.SalesOrder}`
-				};
-			}
-			if (input.MarkFor) {
-				if (input.CustomerPoNumber) {
-				}
-			} else if (input.CustomerPoNumber) {
-			}
-			context.result = order;
-			res.render('check_order', context);
-		}).catch((err) => {
-			console.log('caught error!');
-			context.errors.server = {
-				msg: err.message
-			}
-			res.render('check_order', context);
-		});
-	} else if (input.MarkFor) {
-		db.getOrderByMarkFor(input.MarkFor).then((orders) => {
-			if (input.CustomerPoNumber) {
-			}
-			if (orders.length > 1) {
-				context.errors.result = {
-					msg: `Found ${orders.length} orders - only showing the first!`
-				};
-			}
-			else if (orders.length === 0) {
-				context.errors.result = {
-					msg: `Could not find any orders!`
-				};
-			}
-			context.result = orders[0];
-			res.render('check_order', context);
-		}).catch((err) => {
-			console.log('caught error!');
-			context.errors.server = {
-				msg: err.message
-			}
-			res.render('check_order', context);
-		});
-	} else if (input.CustomerPoNumber) {
-		db.getOrderByPoNumber(input.CustomerPoNumber).then((orders) => {
-			if (orders.length > 1) {
-				context.errors.result = {
-					msg: `Found ${orders.length} orders - only showing the first!`
-				};
-			}
-			else if (orders.length === 0) {
-				context.errors.result = {
-					msg: `Could not find any orders!`
-				};
-			}
-			context.result = orders[0];
-			res.render('check_order', context);
-		}).catch((err) => {
-			console.log('caught error!');
-			context.errors.server = {
-				msg: err.message
-			}
-			res.render('check_order', context);
-		});
-	}
+	return getOrders(input.SalesOrder, input.CustomerPoNumber, input.MarkFor).then((orders) => {
+		if (orders.length > 1) {
+			context.errors.result = {
+				msg: `Found ${orders.length} orders - only showing the first!`
+			};
+		}
+		else if (orders.length === 0) {
+			context.errors.result = {
+				msg: `Could not find any orders!`
+			};
+		}
+		let order = orders[0];
+		context.result = order;
+		return res.render('check_order', context);
+	}).catch((err) => {
+		console.log('caught error!');
+		context.errors.server = {
+			msg: err.message
+		}
+		return res.render('check_order', context);
+	});
 })
 
 // PRINT RMA PAGE
@@ -481,7 +526,6 @@ router.post('/print_rma', [
         context.rma = rma;
 		context.job = job;
 		context.date = moment(new Date()).format('MM / DD / YYYY');
-        console.log('rendering data!');
         return res.render('rma_report', context);
     }).catch((err) => {
         // got an error - render it!
