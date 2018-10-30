@@ -130,12 +130,40 @@ function getRMA(rmaNumber, attention=null) {
     var rma = null;
 	var job = null;
 	var progRec = null;
-	return db.getRMA(rmaNumber).then((r) => {
+	return new Promise((resolve, reject) => {
+		if (rmaNumber) {
+			db.getRMA(rmaNumber).then((r) => {
+				resolve(r);
+			}).catch((err) => {
+				reject({
+					msg: "Couldn't get RMA by RMA Number '" + rmaNumber + "': " + err
+				});
+			});
+		} else if (attention) {
+			db.getRMAByAttention(attention).then((r) => {
+				if (r && db.exists(r['RMA Number'])) {
+					db.getRMA(r['RMA Number']).then((_rma) => {
+						resolve(_rma);
+					});
+				} else {
+					throw "No RMA Found!";
+				}
+			}).catch((err) => {
+				reject({
+					msg: "Couldn't get RMA by Attention '" + attention + "': " + err
+				});
+			});
+		} else {
+			reject({
+				msg: "Must provide either RMA Number or Attention"
+			});
+		}
+	}).then((r) => {
         // PULL OUT DATA
 		rma = r;
 		if (!rma) {
 			throw ({
-				message: "Couldn't find RMA " + rmaNumber
+				msg: "Couldn't find RMA " + rmaNumber
 			});
 		}
         if (rma && db.exists(rma["Sales Order"])) {
@@ -369,12 +397,6 @@ router.post('/search', [
         csrfToken: req.csrfToken()
     });
 
-	if (db.exists(attention)) {
-		context.errors.warning = {
-			msg: 'WARNING: Attention field is not searchable yet!'
-		};
-	}
-
 	let order = null,
 		devices = null,
 		rmas = null;
@@ -497,7 +519,7 @@ router.post('/search', [
 	} else if (hasRmaQuery) {
 		// if we get RMA
 		// - search for device, order
-		return getRMA(rmaNumber).then((r) => {
+		return getRMA(rmaNumber, attention).then((r) => {
 			// combine all the info for display
 			rmaDisplay(r);
 			// now pull the rma out

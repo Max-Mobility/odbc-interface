@@ -518,6 +518,33 @@ function getRMABySerial(serial_number) {
     });
 };
 
+function getRMAByAttention(attn) {
+    // Loop through our tables
+    var tasks = types.RMA.tables.map((t) => {
+        var lu = {
+            table: t,
+            queries: [
+                {
+                    operator: 'LIKE',
+                    column: 'Attention',
+                    pattern: `%${attn}%`
+                }
+            ]
+        };
+        return lookup(lu).catch((err) => {
+			console.log(`cannot get rma: ${err}`);
+			return [];
+		});;
+    });
+    return Promise.all(tasks).then((dataArray) => {
+        return _.flatten(dataArray).reduce(mergeObjects, {});
+    }).then((obj) => {
+        return types.RMA.create(obj);
+    }).catch((err) => {
+        console.log(`cannot get rma: ${err}`);
+    });
+};
+
 function getParts(job_number) {
     // Loop through our tables
     var tasks = types.Part.tables.map((t) => {
@@ -1131,6 +1158,7 @@ module.exports = {
     // functions for objects
     getCustomer,
     getRMA,
+    getRMAByAttention,
     getRMABySerial,
 	getJob,
 	getProgrammingRecord,
