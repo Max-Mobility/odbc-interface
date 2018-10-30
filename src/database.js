@@ -102,7 +102,7 @@ const exists = (_i) => {
 	}
 };
 
-let mergedValues = ['MStockCode', 'MStockDes', 'MOrderQty', 'MShipQty'];
+let mergedValues = ['MStockCode', 'MStockDes', 'MOrderQty', 'MShipQty', 'Comment'];
 const mergeObjects = (output, a, b) => {
     Object.keys(a).map((k) => {
         var v = a[k];
@@ -244,12 +244,14 @@ const types = {
             "RmaMaster+",
             "RmaDetail",
             "RmaDetailSer",
+			"RmaComment"
         ],
         inputMap: {
             "RMA Number": 'RmaNumber',
 			"Attention": 'Attention',
             "Serial Number": 'Serial',
             "Status": 'Status',
+			"Notes": 'Comment',
 			"Email": 'Email',
             "Customer Number": 'Customer',
             "Customer Name": 'CustomerName',
@@ -460,7 +462,6 @@ function getRMAs(customer_number) {
     };
     return lookup(lookupOpts).then(data => {
         var tasks = data.map((d) => {
-            console.log(`Looking up RMA: ${d.RmaNumber}`);
             return getRMA(d.RmaNumber);
         });
         return Promise.all(tasks);
