@@ -412,6 +412,9 @@ const types = {
 					a[e] = val
                 return a;
             }, {});
+			o['__DISPLAY__'] = `<div style=\"display: grid;\"><span>Device: <font color=\"blue\">${o["Serial Number"]}</font><br></span><span>Description: <font color=\"blue\">${o['Description']}</font>`;
+			o['__DISPLAY__'] += `<br></span><span>Stock Code: <font color=\"blue\">${o['Stock Code']}</font>`;
+			o['__DISPLAY__'] += `</span></div>`;
             return o;
         }
     }

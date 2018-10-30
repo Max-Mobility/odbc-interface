@@ -354,7 +354,8 @@ router.post('/search', [
     });
 
 	let order = null,
-		rma = null;
+		devices = null,
+		rmas = null;
 
 	if (hasOrderQuery) {
 		// if we get SalesOrder, CustomerPoNumber, or MarkFor
@@ -372,14 +373,28 @@ router.post('/search', [
 				context.errors.result = {
 					msg: `Found ${orders.length} orders - not searching for other information; please refine your search to see device / rma information!`
 				};
+				context.result = orders;
+				return;
 			}
 			else if (orders.length === 0) {
 				context.errors.result = {
 					msg: `Could not find any orders!`
 				};
 			}
+			else {
+				let order = orders[0];
+				context.result = [order];
+				if (db.exists(order["Last Invoice"])) {
+					return db.getDeviceByInvoice(order["Last Invoice"]).then((devices) => {
+						context.result = _.flatten(_.union(context.result, devices));
+					});
+				} else {
+					return;
+				}
+			}
 			// NOW GET INVOICES AND SUCH
-			context.result = orders;
+		}).then(() => {
+			// now render the results
 			return res.render('search', context);
 		}).catch((err) => {
 			context.errors.server = {
@@ -404,19 +419,29 @@ router.post('/search', [
 			}
 		}).then((_order) => {
 			order = _order;
-			return db.getRMABySerial(serial);
-		}).then((_rma) => {
-			if (_rma) {
-				return getRMA(_rma["RMA Number"]);
+			if (db.exists(order["Last Invoice"])) {
+				return db.getDeviceByInvoice(order["Last Invoice"]);
 			} else {
 				return null;
 			}
-		}).then((rmaRecord) => {
-			if (rmaRecord) {
-				rmaDisplay(rmaRecord);
-				rma = rmaRecord.rma;
+		}).then((_devices) => {
+			devices = _devices;
+			return Promise.all(devices.map(d => db.getRMABySerial(d["Serial Number"])));
+		}).then((_rmas) => {
+			_rmas = _.compact(_rmas);
+			if (_rmas && _rmas.length) {
+				return Promise.all(_rmas.map(r => getRMA(r["RMA Number"])));
+			} else {
+				return null;
 			}
-			if (!order && !rma) {
+		}).then((rmaRecords) => {
+			if (rmaRecords) {
+				rmas = rmaRecords.map((rr) => {
+					rmaDisplay(rr);
+					return rr.rma;
+				});
+			}
+			if (!order && !rmas) {
 				throw {
 					message: `Could not find sales order or RMA associated with S/N: ${serial}`
 				}
@@ -425,8 +450,11 @@ router.post('/search', [
 			if (order) {
 				context.result.push(order);
 			}
-			if (rma) {
-				context.result.push(rma);
+			if (devices) {
+				context.result = _.flatten(_.union(context.result, devices));
+			}
+			if (rmas) {
+				context.result = _.flatten(_.union(context.result, rmas));
 			}
 			return res.render('search', context);
 		}).catch((err) => {
