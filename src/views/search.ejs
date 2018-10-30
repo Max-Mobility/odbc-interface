@@ -52,7 +52,7 @@
 <% } else if (Array.isArray(i[k])) { %>
 <div class="property-value"><pre><%= i[k].join('\n') %></pre></div>
 <% } else { %>
-<div class="property-value"><pre><%= i[k] %></pre></div>
+<div class="property-value"><pre><%- i[k] %></pre></div>
 <% } %>
 </div>
 <% }) %>

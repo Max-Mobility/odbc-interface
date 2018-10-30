@@ -30,6 +30,7 @@ var templateContext = function() {
 		'Mark For',
 		'Serial Number',
 		'RMA Number',
+		'Attention',
 	];
     const fields=Object.keys(db.fieldMap).map((f) => { return {
         title: f,
@@ -106,12 +107,25 @@ function rmaDisplay(rmaRecord) {
 		rma['__DISPLAY__'] += `<br></span><span>Expected Ship Date: <font color=\"blue\">${shipDate}</font>`;
 	}
 	if (order && db.exists(order['Tracking Number'])) {
-		rma['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${order['Tracking Number']}">${order['Tracking Number']}</a></span>`;
+		rma['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${order['Tracking Number']}">${order['Tracking Number']}</a>`;
+	}
+	if (db.exists(rma['Attention'])) {
+		rma['__DISPLAY__'] += `<br></span><span>Attention: <font color=\"blue\">${rma['Attention']}</font>`;
 	}
 	rma['__DISPLAY__'] += `</span></div>`;
+
+	// now show the work that was done to it
+	if (job) {
+		rma['Work Report'] = '<table style="width: 100%"><tbody><tr><td><b>Quantity</b></td><td><b>Item Code</b></td><td><b>Description</b></td></tr>';
+		// fill it in with the parts
+		job.Parts.map((p) => {
+			rma['Work Report'] += `<tr><td>${p['Quantity Issued']}</td><td>${p['Stock Code']}</td><td>${p['Description']}</td></tr>`;
+		});
+		rma['Work Report'] += '</tbody></table>';
+	}
 }
 
-function getRMA(rmaNumber) {
+function getRMA(rmaNumber, attention=null) {
     var order = null;
     var rma = null;
 	var job = null;
@@ -324,14 +338,16 @@ router.post('/search', [
 		poNumber = input['PO Number'],
 		markFor = input['Mark For'],
 		serial = input['Serial Number'],
-		rmaNumber = input['RMA Number'];
+		rmaNumber = input['RMA Number'],
+		attention = input['Attention'];
 
 	// make sure we don't have conflicting search terms
 	const hasOrderQuery = db.exists(orderNumber) ||
 		  db.exists(poNumber) ||
 		  db.exists(markFor);
 	const hasSerialQuery = db.exists(serial);
-	const hasRmaQuery = db.exists(rmaNumber)
+	const hasRmaQuery = db.exists(rmaNumber) ||
+		  db.exists(attention);
 	const conflicting = (hasOrderQuery && hasRmaQuery) || (hasOrderQuery && hasSerialQuery) || (hasSerialQuery && hasRmaQuery);
 
 	if (conflicting) {
@@ -340,7 +356,7 @@ router.post('/search', [
             items: [],
             errors: {
 				input: {
-					msg: 'You can only search by ONE OF order info, OR serial number, OR rma number!'
+					msg: 'You can only search by ONE OF order info, OR serial number, OR rma info!'
 				}
 			},
             csrfToken: req.csrfToken()
@@ -352,6 +368,12 @@ router.post('/search', [
         errors: {},
         csrfToken: req.csrfToken()
     });
+
+	if (db.exists(attention)) {
+		context.errors.warning = {
+			msg: 'WARNING: Attention field is not searchable yet!'
+		};
+	}
 
 	let order = null,
 		devices = null,
@@ -412,6 +434,7 @@ router.post('/search', [
 					message: `Could not find device with S/N: ${serial}`
 				}
 			}
+			devices = [device];
 			if (db.exists(device["Sales Order Number"])) {
 				return db.getOrder(device["Sales Order Number"]);
 			} else {
@@ -419,17 +442,25 @@ router.post('/search', [
 			}
 		}).then((_order) => {
 			order = _order;
-			if (db.exists(order["Last Invoice"])) {
+			if (order && db.exists(order["Last Invoice"])) {
 				return db.getDeviceByInvoice(order["Last Invoice"]);
 			} else {
 				return null;
 			}
 		}).then((_devices) => {
-			devices = _devices;
-			return Promise.all(devices.map(d => db.getRMABySerial(d["Serial Number"])));
+			if (_devices) {
+				devices = _devices;
+				return Promise.all(devices.map(d => db.getRMABySerial(d["Serial Number"])));
+			} else {
+				return db.getRMABySerial(serial).then((rma) => {
+					console.log(rma);
+					return [rma];
+				});
+			}
 		}).then((_rmas) => {
-			_rmas = _.compact(_rmas);
-			if (_rmas && _rmas.length) {
+			if (_rmas) {
+				console.log(_rmas);
+				_rmas = _.compact(_rmas);
 				return Promise.all(_rmas.map(r => getRMA(r["RMA Number"])));
 			} else {
 				return null;

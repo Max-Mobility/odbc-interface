@@ -17,7 +17,8 @@ const fieldMap = {
     "Customer Name": "CustomerName",
     "PO Number": "CustomerPoNumber",
     "RMA Number": "RmaNumber",
-    "Mark For": "MarkFor"
+    "Mark For": "MarkFor",
+    "Attention": "Attention"
 };
 
 const searchFields = {
@@ -223,12 +224,14 @@ const types = {
 
 			o['__DISPLAY__'] = `<div style=\"display: grid;\"><span>Order: <font color=\"blue\">${parseInt(o["Order Number"])}</font><br></span><span>Status: <font color=\"blue\">${o['Status']}</font>`;
 			o['__DISPLAY__'] += `<br></span><span>Mark For: <font color=\"blue\">${mf}</font>`;
-			if (exists(o['Tracking Number'])) {
-				o['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${o['Tracking Number']}">${o['Tracking Number']}</a>`;
-			}
-			if (exists(o['PO Number'])) {
-				o['__DISPLAY__'] += `<br></span><span>PO Number: <font color="blue">${o['PO Number']}</font>`;
-			}
+			var tr = o["Tracking Number"];
+			tr = exists(tr) ? `<a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${tr}">${tr}</a>` :
+				"<font color=\"gray\">No Tracking Number</font>";
+			o['__DISPLAY__'] += `<br></span><span>Tracking Number: ${tr}`;
+			var po = o["PO Number"];
+			po = exists(po) ? `<font color=\"blue\">${po}</font>` :
+				"<font color=\"gray\">No PO Number</font>";
+			o['__DISPLAY__'] += `<br></span><span>PO Number: ${po}`;
 			o['__DISPLAY__'] += `</span></div>`;
 			// update stock codes and such
             return o;
@@ -245,8 +248,9 @@ const types = {
         inputMap: {
             "RMA Number": 'RmaNumber',
 			"Attention": 'Attention',
-			"Email": 'Email',
+            "Serial Number": 'Serial',
             "Status": 'Status',
+			"Email": 'Email',
             "Customer Number": 'Customer',
             "Customer Name": 'CustomerName',
             "Operator": 'Operator',
@@ -257,7 +261,6 @@ const types = {
             "Last Transaction Date": 'LastTranactDate',
             "Special Instructions": 'SpecialInstrs',
             "Service Ticket": 'ServiceTicket',
-            "Serial Number": 'Serial'
         },
         create: function(input) {
 			if (_.isEmpty(input)) {
