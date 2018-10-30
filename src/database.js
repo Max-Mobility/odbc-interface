@@ -252,6 +252,7 @@ const types = {
             "Serial Number": 'Serial',
             "Status": 'Status',
 			"Notes": 'Comment',
+			"Problem Code": 'ProblemCode',
 			"Email": 'Email',
             "Customer Number": 'Customer',
             "Customer Name": 'CustomerName',

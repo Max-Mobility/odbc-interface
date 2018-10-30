@@ -32,6 +32,7 @@
   </div>
 </form>
 
+<% if (result) { %>
 <div class="results" style="width: 50%">
 
 <div class="orders col" style="width: 100%">
@@ -40,7 +41,7 @@
 <font color="Blue"><%= k %>: '<%= d %>'</font><br>
 <% }}) %>
 </h4>
-<% if (result) { result.map((i) => { %>
+<% result.map((i) => { %>
 <details><summary><%- i["__DISPLAY__"] %></summary>
 <div class="property-list">
 <% Object.keys(i).filter(k => k[0] != '_').map((k) => { %>
@@ -58,7 +59,8 @@
 <% }) %>
 </div>
 </details>
-<% })} %>
+<% }) %>
 </div>
 
 </div>
+<% } %>
