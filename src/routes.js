@@ -125,45 +125,57 @@ function rmaDisplay(rmaRecord) {
 	}
 }
 
-function getRMA(rmaNumber, attention=null) {
-    var order = null;
-    var rma = null;
-	var job = null;
-	var progRec = null;
+function getRMAs(rmaNumber, attention) {
 	return new Promise((resolve, reject) => {
 		if (rmaNumber) {
-			db.getRMA(rmaNumber).then((r) => {
-				resolve(r);
+			getRMA(rmaNumber).then((r) => {
+				resolve([r]);
 			}).catch((err) => {
 				reject({
-					msg: "Couldn't get RMA by RMA Number '" + rmaNumber + "': " + err
+					message: "Couldn't get RMA by RMA Number '" + rmaNumber + "': " + err
 				});
 			});
 		} else if (attention) {
-			db.getRMAByAttention(attention).then((r) => {
-				if (r && db.exists(r['RMA Number'])) {
-					db.getRMA(r['RMA Number']).then((_rma) => {
-						resolve(_rma);
-					});
+			db.getRMAByAttention(attention).then((rmas) => {
+				if (rmas) {
+					Promise.all(
+						rmas.map((r) => {
+							if (db.exists(r['RMA Number'])) {
+								return getRMA(r['RMA Number']);
+							} else {
+								return null;
+							}
+						})
+					).then((_rmas) => {
+						resolve(_.compact(_rmas));
+					})
 				} else {
 					throw "No RMA Found!";
 				}
 			}).catch((err) => {
 				reject({
-					msg: "Couldn't get RMA by Attention '" + attention + "': " + err
+					message: "Couldn't get RMA by Attention '" + attention + "': " + err
 				});
 			});
 		} else {
 			reject({
-				msg: "Must provide either RMA Number or Attention"
+				message: "Must provide either RMA Number or Attention"
 			});
 		}
-	}).then((r) => {
+	})
+}
+
+function getRMA(rmaNumber) {
+    var order = null;
+    var rma = null;
+	var job = null;
+	var progRec = null;
+	return db.getRMA(rmaNumber).then((r) => {
         // PULL OUT DATA
 		rma = r;
 		if (!rma) {
 			throw ({
-				msg: "Couldn't find RMA " + rmaNumber
+				message: "Couldn't find RMA " + rmaNumber
 			});
 		}
         if (rma && db.exists(rma["Sales Order"])) {
@@ -519,12 +531,18 @@ router.post('/search', [
 	} else if (hasRmaQuery) {
 		// if we get RMA
 		// - search for device, order
-		return getRMA(rmaNumber, attention).then((r) => {
-			// combine all the info for display
-			rmaDisplay(r);
-			// now pull the rma out
-			var rma = r.rma;
-			context.result = [rma];
+		return getRMAs(rmaNumber, attention).then((rmaRecords) => {
+			if (rmaRecords && rmaRecords.length) {
+				rmas = rmaRecords.map((rr) => {
+					rmaDisplay(rr);
+					return rr.rma;
+				});
+			} else {
+				throw {
+					message: 'Could not find any RMAs'
+				}
+			}
+			context.result = rmas;
 			// now render it
 			return res.render('search', context);
 		}).catch((err) => {

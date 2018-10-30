@@ -537,9 +537,9 @@ function getRMAByAttention(attn) {
 		});;
     });
     return Promise.all(tasks).then((dataArray) => {
-        return _.flatten(dataArray).reduce(mergeObjects, {});
-    }).then((obj) => {
-        return types.RMA.create(obj);
+        return _.flatten(dataArray).map((o) => {
+			return types.RMA.create(o);
+		});
     }).catch((err) => {
         console.log(`cannot get rma: ${err}`);
     });
