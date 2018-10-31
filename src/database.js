@@ -102,7 +102,7 @@ const exists = (_i) => {
 	}
 };
 
-let mergedValues = ['MStockCode', 'MStockDes', 'MOrderQty', 'MShipQty', 'Comment'];
+let mergedValues = ['MStockCode', 'MStockDes', 'MOrderQty', 'MShipQty', 'NComment', 'Comment'];
 const mergeObjects = (output, a, b) => {
     Object.keys(a).map((k) => {
         var v = a[k];
@@ -112,7 +112,7 @@ const mergeObjects = (output, a, b) => {
 			output[k] = _.flatten(_.union([o], [v]));
         } else if (mergedValues.indexOf(k) > -1) {
             output[k] = [v];
-		} else {
+		} else if (exists(v)) {
 			output[k] = v;
 		}
     });
@@ -125,7 +125,7 @@ const mergeObjects = (output, a, b) => {
 				output[k] = _.flatten(_.union([o], [v]));
 			} else if (mergedValues.indexOf(k) > -1) {
 				output[k] = [v];
-			} else {
+			} else if (exists(v)) {
 				output[k] = v;
 			}
         });
@@ -183,6 +183,9 @@ const types = {
             'Actual Ship Date': 'InvoiceDate',
             'Tracking Number': 'Tracking',
             'Mark For': 'MarkFor',
+			'Stock Code': "MStockCode",
+			'Stock Description': "MStockDes",
+			'Comment': 'NComment',
             'Chair Make': 'ChairMake',
             'Chair Model': 'ChairModel',
             'Chair Width': 'ChairWidth',
@@ -191,8 +194,6 @@ const types = {
             'Last Invoice': "LastInvoice",
             'Last Operator': "LastOperator",
             'Job': "Job",
-			'Stock Code': "MStockCode",
-			'Stock Description': "MStockDes",
 			'Ship Quantity': "MShipQty",
             'Serialised?': "SerialisedFlag",
             'Jobs Exist?': "JobsExistFlag",
@@ -633,7 +634,6 @@ function getDevices(customer_number) {
     };
     return lookup(lookupOpts).then(data => {
         var tasks = data.map((d) => {
-            console.log(`Looking up device: ${d.Serial}`);
             return getDevice(d.Serial);
         });
         return Promise.all(tasks);
@@ -677,7 +677,6 @@ function getOrders(customer_number) {
     };
     return lookup(lookupOpts).then(data => {
         var tasks = data.map((d) => {
-            console.log(`Looking up order: ${d.SalesOrder}`);
             return getOrder(d.SalesOrder);
         });
         return Promise.all(tasks);
