@@ -109,10 +109,10 @@ const mergeObjects = (output, a, b) => {
         var o = output[k];
         if (o !== undefined && mergedValues.indexOf(k) > -1) {
 			// if we're getting strings or arrays, turn them into a list of objects
-			output[k] = _.flatten(_.union([v], [o]));
+			output[k] = _.flatten(_.union([o], [v]));
         } else if (mergedValues.indexOf(k) > -1) {
             output[k] = [v];
-        } else {
+		} else {
 			output[k] = v;
 		}
     });
@@ -122,12 +122,12 @@ const mergeObjects = (output, a, b) => {
             var o = output[k];
 			if (o !== undefined && mergedValues.indexOf(k) > -1) {
 				// if we're getting strings or arrays, turn them into a list of objects
-				output[k] = _.flatten(_.union([v], [o]));
+				output[k] = _.flatten(_.union([o], [v]));
 			} else if (mergedValues.indexOf(k) > -1) {
 				output[k] = [v];
-            } else {
-                output[k] = v;
-            }
+			} else {
+				output[k] = v;
+			}
         });
     }
     return output;
