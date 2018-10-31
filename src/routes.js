@@ -694,6 +694,11 @@ router.get('/', (req, res) => {
             },
             {
                 operator: 'LIKE',
+                column: 'Branch',
+                pattern: '01'
+            },
+            {
+                operator: 'LIKE',
                 column: 'CustomerPoNumber',
                 pattern: '%RMA:%',
                 invert: true
