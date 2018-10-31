@@ -58,13 +58,13 @@ function rmaState(rmaRecord) {
 		status = 'Awaiting PO';
 	} else if (job && job['Complete'] == 'Y') {
 		status = 'Packaging';
-		shipDate = moment().add(1, 'days');
+		shipDate = business.addWeekDays(moment(), 1);
 	} else if (progRec && progRec['Date Programmed'] && progRec['Date Programmed'].length) {
 		status = 'Testing';
-		shipDate = moment().add(2, 'days');
+		shipDate = business.addWeekDays(moment(), 2);
 	} else if (rma && rma['Status'] == 9) {
 		status = 'Processing / Repairing';
-		shipDate = moment().add(3, 'days');
+		shipDate = business.addWeekDays(moment(), 3);
 	} else {
 		status = 'Awaiting Delivery';
 	}
