@@ -487,13 +487,13 @@ router.post('/search', [
 				return Promise.all(devices.map(d => db.getRMABySerial(d["Serial Number"])));
 			} else {
 				return db.getRMABySerial(serial).then((rma) => {
-					console.log(rma);
+					//console.log(rma);
 					return [rma];
 				});
 			}
 		}).then((_rmas) => {
 			if (_rmas) {
-				console.log(_rmas);
+				//console.log(_rmas);
 				_rmas = _.compact(_rmas);
 				return Promise.all(_rmas.map(r => getRMA(r["RMA Number"])));
 			} else {

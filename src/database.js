@@ -497,20 +497,24 @@ function getRMA(rma_number) {
 function getRMABySerial(serial_number) {
     // Loop through our tables
     var tasks = types.RMA.tables.map((t) => {
-        var lu = {
-            table: t,
-            queries: [
-                {
-                    operator: 'LIKE',
-                    column: 'Serial',
-                    pattern: `${serial_number}`
-                }
-            ]
-        };
-        return lookup(lu).catch((err) => {
-			console.log(`cannot get rma: ${err}`);
-			return [];
-		});;
+		var fields = ['Comment','Serial'];
+		var _tasks = fields.map((f) => {
+			var lu = {
+				table: t,
+				queries: [
+					{
+						operator: 'LIKE',
+						column: f,
+						pattern: `%${serial_number}%`
+					},
+				]
+			};
+			return lookup(lu).catch((err) => {
+				console.log(`cannot get rma: ${err}`);
+				return [];
+			});
+		});
+		return Promise.all(_tasks);
     });
     return Promise.all(tasks).then((dataArray) => {
         return _.flatten(dataArray).reduce(mergeObjects, {});
@@ -1036,15 +1040,16 @@ function lookup(opts) {
                 var operator = `${q.operator}`;
                 var col = `${q.column}`;
                 var pattern = `${q.pattern}`;
+				var join = `${q.join || 'AND'}`
                 if (operator == 'LIKE') {
                     col = `LOWER(${q.column})`;
                     pattern = `LOWER('${q.pattern}')`;
                 }
                 var invert = q.invert ? `NOT` : '';
-                query += ` ${invert} ${col} ${operator} ${pattern} AND`;
+                query += ` ${invert} ${col} ${operator} ${pattern} ${join}`;
             }
         });
-        query = query.replace(/AND$/, '');
+        query = query.replace(/(AND|OR)$/, '');
         if (opts.orderBy !== undefined) {
             query += ` ORDER BY ${opts.orderBy.columns.join(',')} ${opts.orderBy.direction}`;
         }
