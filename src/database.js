@@ -517,9 +517,18 @@ function getRMABySerial(serial_number) {
 		return Promise.all(_tasks);
     });
     return Promise.all(tasks).then((dataArray) => {
-        return _.flatten(dataArray).reduce(mergeObjects, {});
-    }).then((obj) => {
-        return types.RMA.create(obj);
+		let dataMap = _.groupBy(
+			_.reject( _.flatten(dataArray), _.isEmpty),
+			"RmaNumber"
+		);
+		return Object.keys(dataMap).map((rmaNumber) => {
+			let objects = dataMap[rmaNumber];
+			return objects.reduce(mergeObjects, {});
+		});
+    }).then((objs) => {
+        return _.flatten(_.reject(objs, _.isEmpty).map((o) => {
+			return types.RMA.create(o);
+		}));
     }).catch((err) => {
         console.log(`cannot get rma: ${err}`);
     });
@@ -1060,9 +1069,9 @@ function lookup(opts) {
 
         _db.query(query, (err, data) => {
             if (err) {
-                console.log('Query Error!');
-                console.log(Object.keys(err));
-                console.log(err);
+                //console.log('Query Error!');
+                //console.log(Object.keys(err));
+                //console.log(err);
                 if (err.message && err.message.includes('Communication link failure')) {
                     // try to re-open the connection
                     open();

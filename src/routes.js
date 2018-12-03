@@ -486,15 +486,11 @@ router.post('/search', [
 				devices = _devices;
 				return Promise.all(devices.map(d => db.getRMABySerial(d["Serial Number"])));
 			} else {
-				return db.getRMABySerial(serial).then((rma) => {
-					//console.log(rma);
-					return [rma];
-				});
+				return db.getRMABySerial(serial);
 			}
 		}).then((_rmas) => {
 			if (_rmas) {
-				//console.log(_rmas);
-				_rmas = _.compact(_rmas);
+				_rmas = _.flatten(_rmas);
 				return Promise.all(_rmas.map(r => getRMA(r["RMA Number"])));
 			} else {
 				return null;
