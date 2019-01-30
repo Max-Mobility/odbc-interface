@@ -696,6 +696,29 @@ function getOrders(customer_number) {
     });
 }
 
+function getTrackingNumber(order_number) {
+    var lu = {
+		db: progRecDB,
+        table: "SmartDriveUPSExport",
+        queries: [
+            {
+                operator: 'LIKE',
+                column: 'SalesOrder',
+                pattern: `%${order_number}%`
+            }
+        ]
+    };
+    return lookup(lu).then((objArray) => {
+		if (objArray.length == 1) {
+			return objArray[0]["TrackingNo"];
+		} else {
+			return undefined;
+		}
+    }).catch((err) => {
+        console.log(`cannot get programming record: ${err}`);
+    });
+};
+
 function getOrder(order_number) {
     // Loop through our tables
     var tasks = types.Order.tables.map((t) => {
@@ -713,6 +736,13 @@ function getOrder(order_number) {
     })
     return Promise.all(tasks).then((dataArray) => {
         return _.flatten(dataArray).reduce(mergeObjects, {});
+    }).then((obj) => {
+		return getTrackingNumber(order_number).then((trackingNumber) => {
+			if (trackingNumber) {
+				obj["Tracking"] = trackingNumber;
+			}
+			return obj;
+		});
     }).then((obj) => {
 		return types.Order.create(obj);
     }).catch((err) => {
