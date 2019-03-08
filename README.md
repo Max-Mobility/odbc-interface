@@ -13,6 +13,7 @@ This repo contains Node.JS code for connecting to a SQL server using ODBC.
 ## Requirements
 
 * [Node.js](http://nodejs.org/) (8.9.0+)
+  * *NOTE:* you **must** use node version < 10, see [this issue about ssl init](https://gist.github.com/shi-yan/dc97d0c89db1b791e03a96d81e9ac29f)
 
 ### Installing node-obdc
 
