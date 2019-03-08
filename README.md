@@ -18,6 +18,7 @@ This repo contains Node.JS code for connecting to a SQL server using ODBC.
 ### Installing node-obdc
 
 ```bash
+sudo apt-get install unixodbc unixodbc-dev
 npm install --save odbc
 ```
 
