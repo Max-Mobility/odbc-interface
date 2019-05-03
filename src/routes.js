@@ -109,6 +109,11 @@ function rmaDisplay(rmaRecord) {
 	if (order && db.exists(order['Tracking Number'])) {
 		rma['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${order['Tracking Number']}">${order['Tracking Number']}</a>`;
 	}
+	if (db.exists(rma['Serial Number'])) {
+		rma['__DISPLAY__'] += `<br></span><span>Serial Number: <font color=\"blue\">${rma['Serial Number']}</font>`;
+	} else if (db.exists(rma['Notes'])) {
+		rma['__DISPLAY__'] += `<br></span><span>Serial Number: <font color=\"blue\">${rma['Notes'][0]}</font>`;
+	}
 	if (db.exists(rma['Attention'])) {
 		rma['__DISPLAY__'] += `<br></span><span>Attention: <font color=\"blue\">${rma['Attention']}</font>`;
 	}
