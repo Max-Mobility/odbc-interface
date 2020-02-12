@@ -259,7 +259,7 @@ const types = {
       "Customer Name": 'CustomerName',
       "Operator": 'Operator',
       "Sales Order": 'RecSalesOrder',
-      'Tracking Number': 'Tracking',
+      'Tracking Number': 'TrackingNumber',
       "Entry Date": 'EntryDate',
       "Job": 'Job',
       "Received Date": 'ReceivedDate',

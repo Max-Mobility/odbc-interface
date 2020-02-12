@@ -106,11 +106,20 @@ function rmaDisplay(rmaRecord) {
   } else if (shipDate.length) {
     rma['__DISPLAY__'] += `<br></span><span>Expected Ship Date: <font color=\"blue\">${shipDate}</font>`;
   }
+    var trackingNo = null;
   if (order && db.exists(order['Tracking Number'])) {
-    rma['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${order['Tracking Number']}">${order['Tracking Number']}</a>`;
-  } else if (rma['Tracking Number']) {
-    rma['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${order['Tracking Number']}">${order['Tracking Number']}</a>`;
+      trackingNo = order['Tracking Number'];
+  } else if (db.exists(rma['Tracking Number'])) {
+      trackingNo = rma['Tracking Number'];
   }
+    if (trackingNo !== null) {
+	var upsRegexp = /[a-z]/gi;
+	if (upsRegexp.test(trackingNo)) {
+	    rma['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="http://wwwapps.ups.com/WebTracking/track?track=yes&trackNums=${trackingNo}">${trackingNo}</a>`;
+	} else {
+	    rma['__DISPLAY__'] += `<br></span><span>Tracking Number: <a target="_blank" href="https://www.fedex.com/apps/fedextrack/?tracknumbers=${trackingNo}">${trackingNo}</a>`;
+	}
+    }
   if (db.exists(rma['Serial Number'])) {
     rma['__DISPLAY__'] += `<br></span><span>Serial Number: <font color=\"blue\">${rma['Serial Number']}</font>`;
   } else if (db.exists(rma['Notes'])) {
